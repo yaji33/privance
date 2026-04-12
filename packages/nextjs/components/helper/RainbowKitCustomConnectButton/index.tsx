@@ -1,6 +1,5 @@
 "use client";
 
-// @refresh reset
 import { Balance } from "../Balance";
 import { AddressInfoDropdown } from "./AddressInfoDropdown";
 import { WrongNetworkDropdown } from "./WrongNetworkDropdown";
@@ -9,9 +8,6 @@ import { Address } from "viem";
 import { useTargetNetwork } from "~~/hooks/helper/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/helper";
 
-/**
- * Custom Wagmi Connect Button (watch balance + custom design)
- */
 export const RainbowKitCustomConnectButton = () => {
   const { targetNetwork } = useTargetNetwork();
 
@@ -28,7 +24,11 @@ export const RainbowKitCustomConnectButton = () => {
             {(() => {
               if (!connected) {
                 return (
-                  <button className="btn btn-md rounded-none bg-[#FFD208] text-gray-900 cursor-pointer border-none" onClick={openConnectModal} type="button">
+                  <button
+                    className="px-4 py-2 bg-[#1741D9] text-white text-sm font-semibold rounded-lg hover:bg-[#1236BA] transition-colors cursor-pointer"
+                    onClick={openConnectModal}
+                    type="button"
+                  >
                     Connect Wallet
                   </button>
                 );
@@ -40,9 +40,9 @@ export const RainbowKitCustomConnectButton = () => {
 
               return (
                 <>
-                  <div className="flex flex-col items-center mr-1 text-gray-900">
+                  <div className="flex flex-col items-center mr-1 text-[#475569]">
                     <Balance address={account.address as Address} className="min-h-0 h-auto" />
-                    <span className="text-xs text-gray-900">{chain.name}</span>
+                    <span className="text-xs text-[#94A3B8]">{chain.name}</span>
                   </div>
                   <AddressInfoDropdown
                     address={account.address as Address}
