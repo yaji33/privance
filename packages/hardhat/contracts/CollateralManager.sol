@@ -16,6 +16,7 @@ contract CollateralManager {
     mapping(address => uint256[]) public userLockedLoans;
 
     address public lendingMarketplace;
+    address public repaymentTracker;
     address public owner;
 
     event CollateralDeposited(address indexed user, uint256 amount);
@@ -26,6 +27,14 @@ contract CollateralManager {
 
     modifier onlyMarketplace() {
         require(msg.sender == lendingMarketplace, "Only marketplace");
+        _;
+    }
+
+    modifier onlyAuthorized() {
+        require(
+            msg.sender == lendingMarketplace || msg.sender == repaymentTracker,
+            "Not authorized"
+        );
         _;
     }
 
@@ -42,6 +51,11 @@ contract CollateralManager {
     /// @notice Update marketplace address (called during deployment wiring)
     function updateMarketplace(address _lendingMarketplace) external onlyOwner {
         lendingMarketplace = _lendingMarketplace;
+    }
+
+    /// @notice Authorize the repayment tracker to release and liquidate collateral
+    function updateRepaymentTracker(address _repaymentTracker) external onlyOwner {
+        repaymentTracker = _repaymentTracker;
     }
 
     /// @notice Deposit ETH as collateral
@@ -81,7 +95,7 @@ contract CollateralManager {
     }
 
     /// @notice Release collateral after loan repayment
-    function releaseCollateral(uint256 loanId) external onlyMarketplace {
+    function releaseCollateral(uint256 loanId) external onlyAuthorized {
         CollateralLock storage lock = collateralLocks[loanId];
         require(lock.isLocked, "Collateral not locked");
         lock.isLocked = false;
@@ -92,7 +106,7 @@ contract CollateralManager {
     function liquidateCollateral(
         uint256 loanId,
         address liquidator
-    ) external onlyMarketplace {
+    ) external onlyAuthorized {
         CollateralLock storage lock = collateralLocks[loanId];
         require(lock.isLocked, "Collateral not locked");
         userCollateral[lock.borrower] -= lock.amount;

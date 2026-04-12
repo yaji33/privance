@@ -28,6 +28,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     result.address
   );
 
+  await execute(
+    "CollateralManager",
+    { from: deployer, log: true },
+    "updateRepaymentTracker",
+    repayment.address
+  );
+
   console.log("LendingMarketplace deployed to:", result.address);
 };
 

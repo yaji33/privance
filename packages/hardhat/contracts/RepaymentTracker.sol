@@ -122,11 +122,11 @@ contract RepaymentTracker {
             emit AgreementRepaid(agreementId);
         }
 
-        emit PaymentMade(
-            agreementId,
-            msg.value,
-            agreement.totalRepaymentAmount - agreement.amountRepaid
-        );
+        uint256 remaining = agreement.amountRepaid >= agreement.totalRepaymentAmount
+            ? 0
+            : agreement.totalRepaymentAmount - agreement.amountRepaid;
+
+        emit PaymentMade(agreementId, msg.value, remaining);
     }
 
     /// @notice Check and mark defaulted loans (callable by anyone)
