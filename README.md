@@ -1,190 +1,315 @@
-# FHEVM React Template
+# Privance
 
-A minimal React frontend template for building FHEVM-enabled decentralized applications (dApps). This template provides a simple development interface for interacting with FHEVM smart contracts, specifically the `FHECounter.sol` contract.
+**Privacy-preserving peer-to-peer lending on Ethereum, powered by Zama FHEVM.**
 
-## 🚀 What is FHEVM?
+Privance enables borrowers and lenders to transact without exposing credit scores, loan amounts, or matching criteria on-chain. All sensitive comparisons are computed in the encrypted domain using Fully Homomorphic Encryption (FHE) — the result of a match check is an encrypted boolean that only the intended parties can decrypt.
 
-FHEVM (Fully Homomorphic Encryption Virtual Machine) enables computation on encrypted data directly on Ethereum. This template demonstrates how to build dApps that can perform computations while keeping data private.
+> **Zama Developer Program — Mainnet Season 2, Builder Track submission.**
 
-## ✨ Features
+---
 
-- **🔐 FHEVM Integration**: Built-in support for fully homomorphic encryption
-- **⚛️ React + Next.js**: Modern, performant frontend framework
-- **🎨 Tailwind CSS**: Utility-first styling for rapid UI development
-- **🔗 RainbowKit**: Seamless wallet connection and management
-- **🌐 Multi-Network Support**: Works on both Sepolia testnet and local Hardhat node
-- **📦 Monorepo Structure**: Organized packages for SDK, contracts, and frontend
+## How It Works
 
-## 🧰 Scripts overview
+### The Core Problem
 
-| Script                   | What it does                                                   |
-| ------------------------ | -------------------------------------------------------------- |
-| `pnpm dev`              | Starts the frontend dev server for the React template.        |
-| `pnpm test`             | Runs the frontend tests in watch mode.                        |
-| `pnpm lint`             | Lints the project using the configured ESLint rules.          |
-| `pnpm build`            | Builds the production bundle for deployment.                  |
-| `pnpm preview`          | Serves the built app locally to verify the production build.  |
+On-chain lending is either:
+- **Transparent** — everyone sees your credit score, loan amount, and counterparty criteria; or
+- **Off-chain** — you trust a centralized intermediary.
 
-## 📋 Prerequinextjss
+Privance solves this with **on-chain FHE computation**: scores and thresholds stay encrypted in storage and are compared without ever being decrypted on-chain.
 
-Before you begin, ensure you have:
+### Loan Lifecycle
 
-- **Node.js** (v18 or higher)
-- **pnpm** package manager
-- **MetaMask** browser extension
-- **Git** for cloning the repository
+```
+Borrower                                    Lender
+   │                                           │
+   ├─ computeCreditScore()                     ├─ createLenderOffer(minScore, maxAmount)
+   │   (FHE: Tier1 + Tier2 → euint64)         │   (deposits ETH, params encrypted)
+   │                                           │
+   ├─ createLoanRequest(amount, duration)      │
+   │   (encrypted amount, plain amount)        │
+   │                                           │
+   ├──────── checkLoanMatch(loanId, offerId) ──┤
+   │         (FHE: score >= min AND             │
+   │          amount <= max → ebool)           │
+   │                                           │
+   │         [lender decrypts ebool off-chain] │
+   │                                           │
+   └─ fundLoan(loanId, offerId) ──────────────►│
+       ETH sent to borrower                    │
+       collateral locked                       │
+       RepaymentAgreement created              │
+   │                                           │
+   ├─ makePayment(agreementId) ───────────────►│
+   │   (ETH forwarded to lender)               │
+   │   (collateral released on full repayment) │
+   │                                           │
+   └─ [or checkDefault() by anyone after due]  │
+       collateral liquidated to lender
+```
 
-## 🛠️ Quick Start
+---
 
-### 1. Clone and Setup
+## Architecture
+
+Three contracts form the Privance v2 protocol, all deployed and wired by the deploy scripts.
+
+### `LendingMarketplace.sol`
+
+The central coordinator. Owns the FHE credit scoring logic and orchestrates loan lifecycle.
+
+| Function | Description |
+|---|---|
+| `computeCreditScore()` | Computes an encrypted FICO-analogous score (300–850) from on-chain data |
+| `createLoanRequest(...)` | Borrower posts an encrypted loan request; requires a valid score |
+| `cancelLoanRequest(loanId)` | Borrower withdraws an unfunded request |
+| `createLenderOffer(...)` | Lender deposits ETH with encrypted criteria |
+| `cancelLenderOffer(offerId)` | Lender withdraws offer and reclaims ETH |
+| `checkLoanMatch(loanId, offerId)` | FHE comparison → encrypted `ebool` stored on-chain |
+| `fundLoan(loanId, offerId)` | Lender funds; transfers exact `plainRequestedAmount` to borrower |
+| `setAavePool(address)` | Owner sets Aave V3 Pool for Tier-2 scoring (optional) |
+| `setScoreValidityPeriod(seconds)` | Owner sets how long a score stays valid; `0` = never expires |
+
+### `CollateralManager.sol`
+
+Manages ETH collateral. Both `LendingMarketplace` (for locking) and `RepaymentTracker` (for release/liquidation) are authorized callers.
+
+| Function | Caller | Description |
+|---|---|---|
+| `depositCollateral()` | Anyone | Deposit ETH collateral |
+| `withdrawCollateral(amount)` | Borrower | Withdraw unlocked collateral |
+| `lockCollateral(borrower, amount, loanId)` | Marketplace only | Lock collateral at loan funding |
+| `releaseCollateral(loanId)` | Marketplace or RepaymentTracker | Release after repayment |
+| `liquidateCollateral(loanId, liquidator)` | Marketplace or RepaymentTracker | Seize to lender on default |
+| `updateRepaymentTracker(address)` | Owner | Wire RepaymentTracker authorization |
+
+### `RepaymentTracker.sol`
+
+Manages repayment agreements, payment forwarding, and default enforcement.
+
+| Function | Description |
+|---|---|
+| `createAgreement(...)` | Called by Marketplace at funding; creates a `RepaymentAgreement` |
+| `makePayment(agreementId)` | Borrower sends ETH; forwarded directly to lender |
+| `checkDefault(agreementId)` | Anyone calls after due date; liquidates collateral if overdue |
+| `getAgreementStatus(id)` | Returns `"ACTIVE"` / `"REPAID"` / `"DEFAULTED"` / `"OVERDUE"` |
+
+---
+
+## FHE Credit Scoring
+
+### Score Range
+
+Scores are clamped to **300–850** (FICO-analogous). They are stored as `euint64` ciphertext; only the borrower can decrypt their own score via the Zama Relayer.
+
+### Computation Formula
+
+```
+score = clamp(base + repaymentBonus - penalty + aaveBonus, 300, 850)
+```
+
+| Component | Details |
+|---|---|
+| **Base** | 500 |
+| **Repayment bonus** (Tier 1) | +50 per completed Privance loan, capped at +300 |
+| **Default penalty** (Tier 1) | −100 per defaulted loan, capped to prevent underflow |
+| **Aave health factor bonus** (Tier 2) | 0–200 pts, mapped from Aave V3 health factor (optional) |
+
+### Tier 1 — Privance Native History
+
+Reads the borrower's own `RepaymentTracker` agreements. Fully trustless — all data lives in the same protocol.
+
+### Tier 2 — Aave V3 Health Factor
+
+Reads the borrower's **public** `healthFactor` from Aave V3 Pool via `IAaveV3Pool.getUserAccountData`. The health factor is a plain `uint256` read from a public view, so it can be safely converted to an encrypted value. This is zero-trust — no oracle, no off-chain feed.
+
+| Health Factor | Aave Bonus |
+|---|---|
+| ≥ 3.0× | +200 |
+| ≥ 2.0× | +150 |
+| ≥ 1.5× | +100 |
+| ≥ 1.0× | +50 |
+| < 1.0× | 0 |
+
+Tier 2 is **opt-in** — set `setAavePool(address(0))` to disable it. If the Aave call reverts for any reason, the bonus falls back to 0 gracefully.
+
+### Score Validity
+
+Scores can be configured to expire via `setScoreValidityPeriod(seconds)`. Setting `0` disables expiry. Expired scores block `createLoanRequest` — borrowers must recompute before posting a new request.
+
+---
+
+## Project Structure
+
+```
+Privance/
+├── packages/
+│   ├── hardhat/                    # Contracts, tests, deploy scripts
+│   │   ├── contracts/
+│   │   │   ├── LendingMarketplace.sol
+│   │   │   ├── CollateralManager.sol
+│   │   │   ├── RepaymentTracker.sol
+│   │   │   └── IAaveV3Pool.sol     # Minimal Aave V3 Pool interface
+│   │   ├── deploy/
+│   │   │   ├── 01_deploy_collateral.ts
+│   │   │   ├── 02_deploy_repayment.ts
+│   │   │   └── 03_deploy_marketplace.ts
+│   │   └── test/
+│   │       └── LendingMarketplace.test.ts
+│   ├── fhevm-sdk/                  # Zama FHEVM SDK wrapper
+│   └── nextjs/                     # Frontend (React + Next.js)
+└── README.md
+```
+
+---
+
+## Prerequisites
+
+- **Node.js** v18+
+- **pnpm** v8+
+- A funded wallet (deployer) with `MNEMONIC` set
+
+---
+
+## Developer Setup
+
+### 1. Install Dependencies
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd fhevm-react-template
-
-# Initialize submodules (includes fhevm-hardhat-template)
-git submodule update --init --recursive
-
-# Install dependencies
 pnpm install
 ```
 
-### 2. Environment Configuration
+### 2. Configure Environment
 
-Set up your Hardhat environment variables by following the [FHEVM documentation](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup#set-up-the-hardhat-configuration-variables-optional):
-
-- `MNEMONIC`: Your wallet mnemonic phrase
-- `INFURA_API_KEY`: Your Infura API key for Sepolia
-
-### 3. Start Development Environment
-
-**Option A: Local Development (Recommended for testing)**
+Set Hardhat configuration variables as documented in the [Zama setup guide](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup#set-up-the-hardhat-configuration-variables-optional):
 
 ```bash
-# Terminal 1: Start local Hardhat node
-pnpm chain
-# RPC URL: http://127.0.0.1:8545 | Chain ID: 31337
-
-# Terminal 2: Deploy contracts to localhost
-pnpm deploy:localhost
-
-# Terminal 3: Start the frontend
-pnpm start
+cd packages/hardhat
+npx hardhat vars set MNEMONIC
+npx hardhat vars set INFURA_API_KEY   # for Sepolia
 ```
 
-**Option B: Sepolia Testnet**
+---
+
+## Compile
 
 ```bash
-# Deploy to Sepolia testnet
-pnpm deploy:sepolia
-
-# Start the frontend
-pnpm start
+cd packages/hardhat
+npx hardhat compile
 ```
 
-### 4. Connect MetaMask
+TypeChain types are regenerated automatically into `packages/hardhat/types/`.
 
-1. Open [http://localhost:3000](http://localhost:3000) in your browser
-2. Click "Connect Wallet" and select MetaMask
-3. If using localhost, add the Hardhat network to MetaMask:
-   - **Network Name**: Hardhat Local
-   - **RPC URL**: `http://127.0.0.1:8545`
-   - **Chain ID**: `31337`
-   - **Currency Symbol**: `ETH`
+---
 
-### ⚠️ Common pitfalls
+## Testing
 
-- If contracts are not found, make sure submodules are initialized with  
-  `git submodule update --init --recursive` and that you have run `pnpm install`.
-- If the frontend shows network or RPC errors, double-check that `MNEMONIC`
-  and `INFURA_API_KEY` are correctly set in your Hardhat environment.
-- If the app builds but cannot read contract state, verify that
-  `NEXT_PUBLIC_ALCHEMY_API_KEY` and `packages/nextjs/contracts/deployedContracts.ts`
-  point to the right network and deployed addresses.
+All 54 tests pass against the Hardhat local network with the FHEVM mock coprocessor.
 
-### ⚠️ Sepolia Production note
-
-- In production, `NEXT_PUBLIC_ALCHEMY_API_KEY` must be set (see `packages/nextjs/scaffold.config.ts`). The app throws if missing.
-- Ensure `packages/nextjs/contracts/deployedContracts.ts` points to your live contract addresses.
-- Optional: set `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` for better WalletConnect reliability.
-- Optional: add per-chain RPCs via `rpcOverrides` in `packages/nextjs/scaffold.config.ts`.
-
-## 🔧 Troubleshooting
-
-### Common MetaMask + Hardhat Issues
-
-When developing with MetaMask and Hardhat, you may encounter these common issues:
-
-#### ❌ Nonce Mismatch Error
-
-**Problem**: MetaMask tracks transaction nonces, but when you restart Hardhat, the node resets while MetaMask doesn't update its tracking.
-
-**Solution**:
-1. Open MetaMask extension
-2. Select the Hardhat network
-3. Go to **Settings** → **Advanced**
-4. Click **"Clear Activity Tab"** (red button)
-5. This resets MetaMask's nonce tracking
-
-#### ❌ Cached View Function Results
-
-**Problem**: MetaMask caches smart contract view function results. After restarting Hardhat, you may see outdated data.
-
-**Solution**:
-1. **Restart your entire browser** (not just refresh the page)
-2. MetaMask's cache is stored in extension memory and requires a full browser restart to clear
-
-> 💡 **Pro Tip**: Always restart your browser after restarting Hardhat to avoid cache issues.
-
-For more details, see the [MetaMask development guide](https://docs.metamask.io/wallet/how-to/run-devnet/).
-
-## 📁 Project Structure
-
-This template uses a monorepo structure with three main packages:
-
-```
-fhevm-react-template/
-├── packages/
-│   ├── fhevm-hardhat-template/    # Smart contracts & deployment
-│   ├── fhevm-sdk/                 # FHEVM SDK package
-│   └── nextjs/                      # React frontend application
-└── scripts/                       # Build and deployment scripts
+```bash
+cd packages/hardhat
+npx hardhat test --network hardhat
 ```
 
-### Key Components
+### Test Coverage
 
-#### 🔗 FHEVM Integration (`packages/nextjs/hooks/fhecounter-example/`)
-- **`useFHECounterWagmi.tsx`**: Example hook demonstrating FHEVM contract interaction
-- Essential hooks for FHEVM-enabled smart contract communication
-- Easily copyable to any FHEVM + React project
+| Suite | Tests |
+|---|---|
+| Deployment | 3 — contract wiring, addresses, ownership |
+| `computeCreditScore` | 5 — base score, re-computation, expiry |
+| `createLoanRequest` | 6 — lifecycle, cancellation, revert cases |
+| `createLenderOffer` | 4 — lifecycle, cancellation, revert cases |
+| `checkLoanMatch` | 6 — match storage, idempotency, revert cases |
+| `fundLoan` | 10 — transfers, collateral locking, agreement creation, reverts |
+| `makePayment` | 7 — partial/full repayment, score update, reverts |
+| `checkDefault` | 5 — before/after due date, liquidation, score penalty |
+| `CollateralManager` | 4 — deposit, withdraw, locked balance |
+| Admin controls | 3 — `setAavePool`, `setScoreValidityPeriod` ACL |
 
-#### 🎣 Wallet Management (`packages/nextjs/hooks/helper/`)
-- MetaMask wallet provider hooks
-- Compatible with EIP-6963 standard
-- Easily adaptable for other wallet providers
+---
 
-#### 🔧 Flexibility
-- Replace `ethers.js` with `Wagmi` or other React-friendly libraries
-- Modular architecture for easy customization
-- Support for multiple wallet providers
+## Deployment
 
-## 📚 Additional Resources
+Contracts are deployed in order using `hardhat-deploy`. Script `03_deploy_marketplace.ts` wires all cross-contract references automatically.
 
-### Official Documentation
-- [FHEVM Documentation](https://docs.zama.ai/protocol/solidity-guides/) - Complete FHEVM guide
-- [FHEVM Hardhat Guide](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat) - Hardhat integration
-- [Relayer SDK Documentation](https://docs.zama.ai/protocol/relayer-sdk-guides/) - SDK reference
-- [Environment Setup](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup#set-up-the-hardhat-configuration-variables-optional) - MNEMONIC & API keys
+### Local Hardhat Node
 
-### Development Tools
-- [MetaMask + Hardhat Setup](https://docs.metamask.io/wallet/how-to/run-devnet/) - Local development
-- [React Documentation](https://reactjs.org/) - React framework guide
+```bash
+# Terminal 1
+cd packages/hardhat
+npx hardhat node
 
-### Community & Support
-- [FHEVM Discord](https://discord.com/invite/zama) - Community support
-- [GitHub Issues](https://github.com/zama-ai/fhevm-react-template/issues) - Bug reports & feature requests
+# Terminal 2
+npx hardhat deploy --network localhost
+```
 
-## 📄 License
+### Sepolia Testnet
 
-This project is licensed under the **BSD-3-Clause-Clear License**. See the [LICENSE](LICENSE) file for details.
+```bash
+cd packages/hardhat
+npx hardhat deploy --network sepolia
+```
+
+### Post-Deploy: Optional Aave Integration
+
+To enable Tier-2 scoring on Sepolia:
+
+```bash
+# Aave V3 Pool on Sepolia: 0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951
+npx hardhat run --network sepolia scripts/set-aave-pool.ts
+```
+
+Or call `setAavePool(poolAddress)` directly from the owner wallet.
+
+### Deployment Order & Wiring
+
+`03_deploy_marketplace.ts` performs these steps automatically:
+
+1. Deploy `LendingMarketplace(collateralAddress, repaymentAddress)`
+2. `CollateralManager.updateMarketplace(marketplaceAddress)`
+3. `RepaymentTracker.updateMarketplace(marketplaceAddress)`
+4. `CollateralManager.updateRepaymentTracker(repaymentAddress)` ← v2 fix
+
+Step 4 is the critical v2 addition: it authorizes `RepaymentTracker` to call `releaseCollateral` and `liquidateCollateral` on `CollateralManager`, which was blocked in v1.
+
+---
+
+## Security Notes
+
+- **No oracle dependency** — all scoring inputs are read from public on-chain state (Privance protocol state + Aave public view).
+- **Underflow protection** — default penalty is capped to total gains before subtraction in the FHE domain.
+- **Collateral check at funding** — `fundLoan` verifies available collateral before locking, preventing dust attacks.
+- **Exact transfer** — `fundLoan` transfers exactly `plainRequestedAmount`, not the offer's full `availableFunds`.
+- **Offer stays live** — a lender offer remains active until funds are exhausted; multiple loans can be funded from one offer.
+- **Access control** — `lockCollateral` is restricted to `LendingMarketplace`; `releaseCollateral` / `liquidateCollateral` are restricted to `LendingMarketplace` or `RepaymentTracker`.
+
+---
+
+## FHE Operations Used
+
+| Operation | Purpose |
+|---|---|
+| `FHE.asEuint64` | Wrap plaintext scores into ciphertext |
+| `FHE.fromExternal` | Decrypt user-submitted encrypted inputs (with ZKP proof) |
+| `FHE.add` / `FHE.sub` / `FHE.mul` | Score arithmetic |
+| `FHE.gt` / `FHE.lt` / `FHE.ge` / `FHE.le` | Score comparisons |
+| `FHE.and` | Combine score match AND amount match |
+| `FHE.select` | Encrypted conditional (used for clamping and capping) |
+| `FHE.allowThis` | Grant the contract access to its own ciphertext handles |
+| `FHE.allow` | Grant a specific address (borrower/lender) decryption rights |
+
+---
+
+## Resources
+
+- [Zama FHEVM Documentation](https://docs.zama.ai/protocol/solidity-guides/)
+- [FHEVM Solidity Library](https://github.com/zama-ai/fhevm-solidity)
+- [Relayer SDK](https://docs.zama.ai/protocol/relayer-sdk-guides/)
+- [Aave V3 Developer Docs](https://docs.aave.com/developers/core-contracts/pool)
+- [Zama Developer Program](https://www.zama.ai/developer-program)
+
+---
+
+## License
+
+BSD-3-Clause-Clear. See [LICENSE](LICENSE).
