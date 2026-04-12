@@ -6,8 +6,8 @@ import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/helper/getMetadata";
 
 export const metadata = getMetadata({
-  title: "Zama Template",
-  description: "Built with FHEVM",
+  title: "Privance",
+  description: "Lend and borrow with complete privacy. Powered by Zama FHEVM.",
 });
 
 const DappWrapper = ({ children }: { children: React.ReactNode }) => {
