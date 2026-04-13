@@ -3,15 +3,17 @@
 import { useMemo, useState } from "react";
 import { BorrowerPanel } from "../_components/dashboard/BorrowerPanel";
 import { LenderPanel } from "../_components/dashboard/LenderPanel";
+import { RepaymentPanel } from "../_components/dashboard/RepaymentPanel";
 import { useFhevm } from "@fhevm-sdk";
 import { RainbowKitCustomConnectButton } from "~~/components/helper/RainbowKitCustomConnectButton";
 import { useCollateral } from "~~/hooks/privance/useCollateral";
 import { useMarketplace } from "~~/hooks/privance/useMarketplace";
+import { useRepaymentTracker } from "~~/hooks/privance/useRepaymentTracker";
 import { useAccount } from "wagmi";
 
 const MOCK_CHAINS = { 31337: "http://localhost:8545" } as const;
 
-type Tab = "borrower" | "lender";
+type Tab = "borrower" | "lender" | "agreements";
 
 export default function DashboardPage() {
   const { isConnected, chain } = useAccount();
@@ -22,15 +24,16 @@ export default function DashboardPage() {
     return (window as any).ethereum;
   }, []);
 
-  const { instance } = useFhevm({
+  const { instance, status: fhevmStatus, error: fhevmError } = useFhevm({
     provider,
     chainId: chain?.id,
     initialMockChains: MOCK_CHAINS,
     enabled: isConnected,
   });
 
-  const marketplace = useMarketplace({ instance });
+  const marketplace = useMarketplace({ instance, fhevmStatus, fhevmError });
   const collateral = useCollateral();
+  const repayment = useRepaymentTracker();
 
   if (!isConnected) {
     return (
@@ -55,6 +58,21 @@ export default function DashboardPage() {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className={`mb-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm border transition-opacity duration-300 ${
+          !fhevmStatus || fhevmStatus === "ready"
+            ? "opacity-0 pointer-events-none select-none border-transparent bg-transparent"
+            : fhevmStatus === "error"
+              ? "opacity-100 bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]"
+              : "opacity-100 bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]"
+        }`}>
+          <span>{fhevmStatus === "error" ? "⚠" : "⏳"}</span>
+          <span className="font-medium">
+            {fhevmStatus === "error"
+              ? `FHE initialization failed${fhevmError ? `: ${String(fhevmError)}` : ". Try refreshing the page."}`
+              : "Initializing FHE encryption layer — this takes a few seconds on first load…"}
+          </span>
+        </div>
+
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#0F172A]">Dashboard</h1>
           <p className="text-sm text-[#64748B] mt-1">
@@ -74,8 +92,9 @@ export default function DashboardPage() {
 
         <div className="flex gap-1 bg-white border border-[#E8EDF8] rounded-2xl p-1.5 w-fit mb-8 shadow-sm">
           {([
-            { id: "borrower", label: "Borrower", icon: "↓" },
-            { id: "lender", label: "Lender", icon: "↑" },
+            { id: "borrower",   label: "Borrower",   icon: "↓" },
+            { id: "lender",     label: "Lender",     icon: "↑" },
+            { id: "agreements", label: "Agreements", icon: "⇄" },
           ] as { id: Tab; label: string; icon: string }[]).map(tab => (
             <button
               key={tab.id}
@@ -88,14 +107,23 @@ export default function DashboardPage() {
             >
               <span className="text-base leading-none">{tab.icon}</span>
               {tab.label}
+              {tab.id === "agreements" && repayment.agreements.length > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                  activeTab === "agreements" ? "bg-white/20 text-white" : "bg-[#EBF0FF] text-[#1741D9]"
+                }`}>
+                  {repayment.agreements.length}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         {activeTab === "borrower" ? (
           <BorrowerPanel marketplace={marketplace} collateral={collateral} />
-        ) : (
+        ) : activeTab === "lender" ? (
           <LenderPanel marketplace={marketplace} />
+        ) : (
+          <RepaymentPanel repayment={repayment} />
         )}
       </div>
     </div>
