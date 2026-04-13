@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import { ethers } from "ethers";
 import { CollateralCard } from "./CollateralCard";
 import { CreditScoreCard } from "./CreditScoreCard";
 import { useCollateral } from "~~/hooks/privance/useCollateral";
 import { useMarketplace } from "~~/hooks/privance/useMarketplace";
+
+const fmtEth = (wei: bigint | undefined) =>
+  wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
+const fmtDays = (secs: bigint) => `${Math.round(Number(secs) / 86400)}d`;
+const fmtDate = (ts: bigint) =>
+  new Date(Number(ts) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 type Props = {
   marketplace: ReturnType<typeof useMarketplace>;
@@ -20,11 +28,15 @@ const DURATION_OPTIONS = [
 ];
 
 export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
-  const { hasCreditScore, nextLoanId, createLoanRequest, cancelLoanRequest, isProcessing } = marketplace;
+  const { address } = useAccount();
+  const { hasCreditScore, nextLoanId, loanList, createLoanRequest, cancelLoanRequest, isProcessing, isInstanceReady, isFhevmError } = marketplace;
 
   const [amount, setAmount] = useState("");
   const [duration, setDuration] = useState(30);
-  const [loanIdToCancel, setLoanIdToCancel] = useState("");
+  const myLoans = useMemo(
+    () => loanList.filter(l => l.borrower?.toLowerCase() === address?.toLowerCase()),
+    [loanList, address],
+  );
 
   const handleCreate = async () => {
     if (!amount || isNaN(parseFloat(amount))) return;
@@ -32,10 +44,10 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
     setAmount("");
   };
 
-  const handleCancel = async () => {
-    if (!loanIdToCancel) return;
-    await cancelLoanRequest(BigInt(loanIdToCancel));
-    setLoanIdToCancel("");
+  const statusBadge = (loan: (typeof myLoans)[number]) => {
+    if (loan.isFunded) return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#F0FDF4] text-[#16A34A]">Funded</span>;
+    if (!loan.isActive) return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#F1F5F9] text-[#64748B]">Cancelled</span>;
+    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EBF0FF] text-[#1741D9]">Active</span>;
   };
 
   return (
@@ -43,6 +55,55 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CreditScoreCard marketplace={marketplace} />
         <CollateralCard collateral={collateral} />
+      </div>
+      
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6">
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h3 className="font-bold text-[#0F172A] text-base">My Loan Requests</h3>
+            <p className="text-xs text-[#94A3B8] mt-0.5">All loan requests submitted from this wallet</p>
+          </div>
+          <span className="text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-full shrink-0">
+            {myLoans.length} total
+          </span>
+        </div>
+        {myLoans.length === 0 ? (
+          <p className="text-sm text-[#94A3B8] py-4 text-center">No loan requests yet. Submit one below.</p>
+        ) : (
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr className="border-b border-[#F1F5F9]">
+                  {["ID", "Amount", "Duration", "Posted", "Status", ""].map(h => (
+                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {myLoans.map(loan => (
+                  <tr key={String(loan.id)} className="border-b border-[#F8FAFC] hover:bg-[#F8FAFC] transition-colors">
+                    <td className="py-3 px-1 font-mono text-xs text-[#64748B]">#{String(loan.id)}</td>
+                    <td className="py-3 px-1 font-medium text-[#0F172A]">{fmtEth(loan.plainRequestedAmount)}</td>
+                    <td className="py-3 px-1 text-[#64748B]">{fmtDays(loan.plainDuration)}</td>
+                    <td className="py-3 px-1 text-[#64748B]">{loan.timestamp > 0n ? fmtDate(loan.timestamp) : "—"}</td>
+                    <td className="py-3 px-1">{statusBadge(loan)}</td>
+                    <td className="py-3 px-1">
+                      {loan.isActive && !loan.isFunded && (
+                        <button
+                          onClick={() => cancelLoanRequest(loan.id)}
+                          disabled={isProcessing}
+                          className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-6">
@@ -109,33 +170,14 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
 
         <button
           onClick={handleCreate}
-          disabled={isProcessing || !hasCreditScore || !amount}
+          disabled={isProcessing || !hasCreditScore || !amount || !isInstanceReady}
+          title={isFhevmError ? "FHE initialization failed — try refreshing the page" : undefined}
           className="w-full py-3 bg-[#1741D9] text-white text-sm font-semibold rounded-xl hover:bg-[#1236BA] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
         >
-          {isProcessing ? "Encrypting & Submitting..." : "Submit Loan Request"}
+          {isFhevmError ? "FHE Unavailable" : !isInstanceReady ? "Initializing FHE..." : isProcessing ? "Encrypting & Submitting..." : "Submit Loan Request"}
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-6">
-        <h3 className="font-bold text-[#0F172A] mb-4">Cancel Loan Request</h3>
-        <div className="flex gap-3">
-          <input
-            type="number"
-            min="0"
-            placeholder="Loan ID to cancel"
-            value={loanIdToCancel}
-            onChange={e => setLoanIdToCancel(e.target.value)}
-            className="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm text-[#0F172A] placeholder-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#1741D9]/20 focus:border-[#1741D9]"
-          />
-          <button
-            onClick={handleCancel}
-            disabled={isProcessing || !loanIdToCancel}
-            className="px-5 py-2.5 bg-red-50 border border-red-100 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

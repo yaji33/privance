@@ -1,178 +1,289 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import { ethers } from "ethers";
 import { useMarketplace } from "~~/hooks/privance/useMarketplace";
 
-type Props = {
-  marketplace: ReturnType<typeof useMarketplace>;
-};
+const fmtEth = (wei: bigint | undefined) =>
+  wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
+const fmtAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+const fmtBps = (bps: bigint) => `${(Number(bps) / 100).toFixed(2)}%`;
+const fmtDays = (secs: bigint) => `${Math.round(Number(secs) / 86400)}d`;
+
+const inputCls =
+  "w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm text-[#0F172A] placeholder-[#CBD5E1] bg-white focus:outline-none focus:ring-2 focus:ring-[#1741D9]/20 focus:border-[#1741D9] transition-colors";
+
+type Props = { marketplace: ReturnType<typeof useMarketplace> };
+
+const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`bg-white rounded-2xl border border-[#E2E8F0] p-6 ${className}`}>{children}</div>
+);
+
+const SectionHeader = ({ title, sub, badge }: { title: string; sub?: string; badge?: string }) => (
+  <div className="flex items-start justify-between mb-5">
+    <div>
+      <h3 className="font-bold text-[#0F172A] text-base">{title}</h3>
+      {sub && <p className="text-xs text-[#94A3B8] mt-0.5">{sub}</p>}
+    </div>
+    {badge && (
+      <span className="text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-full shrink-0">
+        {badge}
+      </span>
+    )}
+  </div>
+);
 
 export const LenderPanel = ({ marketplace }: Props) => {
-  const { nextOfferId, createLenderOffer, cancelLenderOffer, isProcessing } = marketplace;
+  const { address } = useAccount();
+  const {
+    loanList, offerList, nextOfferId,
+    createLenderOffer, cancelLenderOffer,
+    checkLoanMatch, fundLoan,
+    canDecrypt, decrypt, isDecrypting,
+    decryptedMatchResult, checkedPair,
+    isProcessing, isInstanceReady, isFhevmError,
+  } = marketplace;
 
-  const [minScore, setMinScore] = useState("500");
-  const [maxAmount, setMaxAmount] = useState("0.1");
-  const [collateralPct, setCollateralPct] = useState("5000");
-  const [interestBps, setInterestBps] = useState("500");
-  const [deposit, setDeposit] = useState("0.5");
+  const [minScore, setMinScore]       = useState("500");
+  const [maxAmount, setMaxAmount]     = useState("0.1");
+  const [collateralPct, setCollateral] = useState("5000");
+  const [interestBps, setInterest]    = useState("500");
+  const [deposit, setDeposit]         = useState("0.5");
 
-  const [offerIdToCancel, setOfferIdToCancel] = useState("");
-  const [matchLoanId, setMatchLoanId] = useState("");
-  const [matchOfferId, setMatchOfferId] = useState("");
-  const [fundLoanId, setFundLoanId] = useState("");
-  const [fundOfferId, setFundOfferId] = useState("");
+  const [selectedLoanId, setSelectedLoanId]   = useState("");
+  const [selectedOfferId, setSelectedOfferId] = useState("");
+
+  const activeLoans  = useMemo(() => loanList.filter(l => l.isActive && !l.isFunded), [loanList]);
+  const myOffers     = useMemo(() => offerList.filter(o => o.lender?.toLowerCase() === address?.toLowerCase()), [offerList, address]);
+  const activeOffers = useMemo(() => myOffers.filter(o => o.isActive), [myOffers]);
+
+  const matchIsCompatible =
+    checkedPair &&
+    selectedLoanId === String(checkedPair.loanId) &&
+    selectedOfferId === String(checkedPair.offerId) &&
+    typeof decryptedMatchResult === "boolean"
+      ? decryptedMatchResult
+      : undefined;
 
   const handleCreateOffer = async () => {
-    if (!minScore || !maxAmount || !deposit) return;
-    await createLenderOffer(
-      parseInt(minScore),
-      maxAmount,
-      parseInt(collateralPct),
-      parseInt(interestBps),
-      deposit,
-    );
+    await createLenderOffer(parseInt(minScore), maxAmount, parseInt(collateralPct), parseInt(interestBps), deposit);
     setDeposit("");
   };
 
-  const handleCancelOffer = async () => {
-    if (!offerIdToCancel) return;
-    await cancelLenderOffer(BigInt(offerIdToCancel));
-    setOfferIdToCancel("");
+  const handleCheckMatch = () => {
+    if (!selectedLoanId || !selectedOfferId) return;
+    checkLoanMatch(BigInt(selectedLoanId), BigInt(selectedOfferId));
   };
 
-  const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-    <label className="block text-sm font-medium text-[#374151] mb-1.5">{children}</label>
-  );
-
-  const Input = ({
-    value,
-    onChange,
-    placeholder,
-    type = "number",
-  }: {
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-    type?: string;
-  }) => (
-    <input
-      type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm text-[#0F172A] placeholder-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#1741D9]/20 focus:border-[#1741D9]"
-    />
-  );
+  const handleFund = () => {
+    if (!selectedLoanId || !selectedOfferId) return;
+    fundLoan(BigInt(selectedLoanId), BigInt(selectedOfferId));
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h3 className="font-bold text-[#0F172A] text-lg">Create Lender Offer</h3>
-            <p className="text-sm text-[#94A3B8] mt-0.5">
-              Min score & max amount are encrypted via FHE before submission
-            </p>
+    <div className="space-y-5">
+      <SectionCard>
+        <SectionHeader
+          title="Active Loan Requests"
+          sub="Unfunded loan requests from borrowers you can potentially match"
+          badge={`${activeLoans.length} active`}
+        />
+        {activeLoans.length === 0 ? (
+          <p className="text-sm text-[#94A3B8] py-4 text-center">No active loan requests yet.</p>
+        ) : (
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-sm min-w-[520px]">
+              <thead>
+                <tr className="border-b border-[#F1F5F9]">
+                  {["ID", "Borrower", "Amount", "Duration", "Action"].map(h => (
+                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {activeLoans.map(loan => (
+                  <tr key={String(loan.id)} className="border-b border-[#F8FAFC] hover:bg-[#F8FAFC] transition-colors">
+                    <td className="py-3 px-1 font-mono text-xs text-[#64748B]">#{String(loan.id)}</td>
+                    <td className="py-3 px-1 font-mono text-xs text-[#0F172A]">{fmtAddr(loan.borrower)}</td>
+                    <td className="py-3 px-1 text-[#0F172A] font-medium">{fmtEth(loan.plainRequestedAmount)}</td>
+                    <td className="py-3 px-1 text-[#64748B]">{fmtDays(loan.plainDuration)}</td>
+                    <td className="py-3 px-1">
+                      <button
+                        onClick={() => { setSelectedLoanId(String(loan.id)); }}
+                        className="text-xs font-semibold text-[#1741D9] hover:underline"
+                      >
+                        Select
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          {nextOfferId !== undefined && (
-            <span className="text-xs text-[#94A3B8] bg-[#F8FAFF] border border-[#E8EDF8] px-2.5 py-1 rounded-full">
-              Next ID: #{String(nextOfferId)}
-            </span>
-          )}
-        </div>
+        )}
+      </SectionCard>
 
+      <SectionCard>
+        <SectionHeader
+          title="Create Lender Offer"
+          sub="Min score & max amount are FHE-encrypted before submission"
+          badge={nextOfferId !== undefined ? `Next ID: #${String(nextOfferId)}` : undefined}
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <FieldLabel>Min Credit Score (300–850)</FieldLabel>
-            <Input value={minScore} onChange={setMinScore} placeholder="e.g. 500" />
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Min Credit Score</label>
+            <input type="number" value={minScore} onChange={e => setMinScore(e.target.value)} placeholder="e.g. 500" className={inputCls} />
           </div>
           <div>
-            <FieldLabel>Max Loan Amount (ETH)</FieldLabel>
-            <Input value={maxAmount} onChange={setMaxAmount} placeholder="e.g. 0.1" />
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Max Loan Amount (ETH)</label>
+            <input type="number" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} placeholder="e.g. 0.1" className={inputCls} />
           </div>
           <div>
-            <FieldLabel>Collateral Req. (basis pts)</FieldLabel>
-            <Input value={collateralPct} onChange={setCollateralPct} placeholder="5000 = 50%" />
-            <p className="text-xs text-[#94A3B8] mt-1">5000 = 50% of loan amount required</p>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Collateral Req. <span className="text-[#94A3B8] font-normal">(bps — 5000 = 50%)</span></label>
+            <input type="number" value={collateralPct} onChange={e => setCollateral(e.target.value)} placeholder="5000" className={inputCls} />
           </div>
           <div>
-            <FieldLabel>Interest Rate (basis pts)</FieldLabel>
-            <Input value={interestBps} onChange={setInterestBps} placeholder="500 = 5%" />
-            <p className="text-xs text-[#94A3B8] mt-1">500 = 5% annualised</p>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Interest Rate <span className="text-[#94A3B8] font-normal">(bps — 500 = 5%)</span></label>
+            <input type="number" value={interestBps} onChange={e => setInterest(e.target.value)} placeholder="500" className={inputCls} />
           </div>
         </div>
-
         <div className="mb-5">
-          <FieldLabel>Deposit ETH (funds the offer pool)</FieldLabel>
-          <Input value={deposit} onChange={setDeposit} placeholder="e.g. 0.5" />
+          <label className="block text-xs font-semibold text-[#374151] mb-1.5">Deposit ETH <span className="text-[#94A3B8] font-normal">(funds the offer pool)</span></label>
+          <input type="number" value={deposit} onChange={e => setDeposit(e.target.value)} placeholder="e.g. 0.5" className={inputCls} />
         </div>
-
-        <div className="flex items-center gap-2 text-xs text-[#94A3B8] mb-4 px-1">
+        <div className="flex items-center gap-2 text-xs text-[#94A3B8] mb-4">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <rect x="2" y="5" width="8" height="6" rx="1" stroke="#94A3B8" strokeWidth="1.2" />
             <path d="M4 5V4a2 2 0 0 1 4 0v1" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
-          Min score & max amount are encrypted with FHE — borrowers never see your thresholds
+          Score threshold & loan cap encrypted with FHE — borrowers cannot see your criteria
         </div>
-
         <button
           onClick={handleCreateOffer}
-          disabled={isProcessing || !minScore || !maxAmount || !deposit}
+          disabled={isProcessing || !isInstanceReady || !minScore || !maxAmount || !deposit}
           className="w-full py-3 bg-[#1741D9] text-white text-sm font-semibold rounded-xl hover:bg-[#1236BA] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
         >
-          {isProcessing ? "Encrypting & Submitting..." : "Create Lender Offer"}
+          {isFhevmError ? "FHE Unavailable" : !isInstanceReady ? "Initializing FHE..." : isProcessing ? "Encrypting & Submitting..." : "Create Lender Offer"}
         </button>
-      </div>
+      </SectionCard>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-6">
-          <h3 className="font-bold text-[#0F172A] mb-1">Check Loan Match</h3>
-          <p className="text-xs text-[#94A3B8] mb-4">
-            Runs encrypted FHE comparison — result stored on-chain for lender to decrypt
-          </p>
-          <div className="space-y-3 mb-4">
-            <Input value={matchLoanId} onChange={setMatchLoanId} placeholder="Loan ID" />
-            <Input value={matchOfferId} onChange={setMatchOfferId} placeholder="Offer ID" />
+      <SectionCard>
+        <SectionHeader title="My Active Offers" badge={`${activeOffers.length} offer${activeOffers.length !== 1 ? "s" : ""}`} />
+        {activeOffers.length === 0 ? (
+          <p className="text-sm text-[#94A3B8] py-4 text-center">You have no active offers.</p>
+        ) : (
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead>
+                <tr className="border-b border-[#F1F5F9]">
+                  {["ID", "Available", "Max Loan", "Collateral", "Interest", ""].map(h => (
+                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {activeOffers.map(offer => (
+                  <tr key={String(offer.id)} className="border-b border-[#F8FAFC] hover:bg-[#F8FAFC] transition-colors">
+                    <td className="py-3 px-1 font-mono text-xs text-[#64748B]">#{String(offer.id)}</td>
+                    <td className="py-3 px-1 font-medium text-[#0F172A]">{fmtEth(offer.availableFunds)}</td>
+                    <td className="py-3 px-1 text-[#64748B]">{fmtEth(offer.plainMaxLoanAmount)}</td>
+                    <td className="py-3 px-1 text-[#64748B]">{fmtBps(offer.collateralPercentage)}</td>
+                    <td className="py-3 px-1 text-[#64748B]">{fmtBps(offer.plainInterestRate)}</td>
+                    <td className="py-3 px-1">
+                      <button
+                        onClick={() => cancelLenderOffer(offer.id)}
+                        disabled={isProcessing}
+                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40"
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <button
-            disabled={isProcessing || !matchLoanId || !matchOfferId}
-            className="w-full py-2.5 bg-[#EBF0FF] text-[#1741D9] text-sm font-semibold rounded-xl hover:bg-[#D8E3FF] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
-          >
-            Run Match Check
-          </button>
-        </div>
+        )}
+      </SectionCard>
 
-        <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-6">
-          <h3 className="font-bold text-[#0F172A] mb-1">Fund Loan</h3>
-          <p className="text-xs text-[#94A3B8] mb-4">
-            After verifying match off-chain, fund the borrower directly
-          </p>
-          <div className="space-y-3 mb-4">
-            <Input value={fundLoanId} onChange={setFundLoanId} placeholder="Loan ID" />
-            <Input value={fundOfferId} onChange={setFundOfferId} placeholder="Offer ID" />
+      <SectionCard>
+        <SectionHeader
+          title="Check Match & Fund"
+          sub="Select a loan request and one of your offers. The FHE comparison runs on-chain."
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Loan Request</label>
+            <select value={selectedLoanId} onChange={e => setSelectedLoanId(e.target.value)} className={inputCls}>
+              <option value="">Select a loan request…</option>
+              {activeLoans.map(l => (
+                <option key={String(l.id)} value={String(l.id)}>
+                  #{String(l.id)} — {fmtEth(l.plainRequestedAmount)} · {fmtDays(l.plainDuration)}
+                </option>
+              ))}
+            </select>
           </div>
-          <button
-            disabled={isProcessing || !fundLoanId || !fundOfferId}
-            className="w-full py-2.5 bg-[#ECFDF5] text-[#059669] text-sm font-semibold rounded-xl hover:bg-[#D1FAE5] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
-          >
-            Fund Loan
-          </button>
+          <div>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Your Offer</label>
+            <select value={selectedOfferId} onChange={e => setSelectedOfferId(e.target.value)} className={inputCls}>
+              <option value="">Select your offer…</option>
+              {activeOffers.map(o => (
+                <option key={String(o.id)} value={String(o.id)}>
+                  #{String(o.id)} — {fmtEth(o.availableFunds)} available
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-6">
-        <h3 className="font-bold text-[#0F172A] mb-4">Cancel Offer</h3>
-        <div className="flex gap-3">
-          <Input value={offerIdToCancel} onChange={setOfferIdToCancel} placeholder="Offer ID to cancel" />
+        {checkedPair && selectedLoanId === String(checkedPair.loanId) && selectedOfferId === String(checkedPair.offerId) && (
+          <div className={`mb-5 flex items-center gap-3 rounded-xl p-3.5 border text-sm font-medium ${
+            matchIsCompatible === true
+              ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
+              : matchIsCompatible === false
+              ? "bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]"
+              : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]"
+          }`}>
+            <span className="text-lg">
+              {matchIsCompatible === true ? "✓" : matchIsCompatible === false ? "✗" : "🔐"}
+            </span>
+            {matchIsCompatible === true
+              ? "Match confirmed — you can fund this loan."
+              : matchIsCompatible === false
+              ? "Not compatible — borrower doesn't meet your criteria."
+              : "Match result encrypted. Click Decrypt to reveal."}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-3">
           <button
-            onClick={handleCancelOffer}
-            disabled={isProcessing || !offerIdToCancel}
-            className="px-5 py-2.5 bg-red-50 border border-red-100 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all whitespace-nowrap"
+            onClick={handleCheckMatch}
+            disabled={isProcessing || !selectedLoanId || !selectedOfferId}
+            className="flex-1 py-2.5 bg-[#EBF0FF] text-[#1741D9] text-sm font-semibold rounded-xl hover:bg-[#D8E3FF] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all min-w-[140px]"
           >
-            Cancel
+            {isProcessing ? "Checking…" : "Check Match (FHE)"}
           </button>
+          {checkedPair && typeof decryptedMatchResult === "undefined" && (
+            <button
+              onClick={decrypt}
+              disabled={!canDecrypt || isDecrypting}
+              className="flex-1 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-sm font-semibold rounded-xl hover:bg-[#EBF0FF] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all min-w-[140px]"
+            >
+              {isDecrypting ? "Decrypting…" : "Decrypt Result"}
+            </button>
+          )}
+          {matchIsCompatible === true && (
+            <button
+              onClick={handleFund}
+              disabled={isProcessing}
+              className="flex-1 py-2.5 bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] text-sm font-semibold rounded-xl hover:bg-[#DCFCE7] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all min-w-[140px]"
+            >
+              {isProcessing ? "Funding…" : "Fund Loan"}
+            </button>
+          )}
         </div>
-      </div>
+      </SectionCard>
     </div>
   );
 };
