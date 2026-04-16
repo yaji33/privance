@@ -4,6 +4,13 @@ import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
 import { useMarketplace } from "~~/hooks/privance/useMarketplace";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~~/components/ui/select";
 
 const fmtEth = (wei: bigint | undefined) =>
   wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
@@ -12,22 +19,25 @@ const fmtBps = (bps: bigint) => `${(Number(bps) / 100).toFixed(2)}%`;
 const fmtDays = (secs: bigint) => `${Math.round(Number(secs) / 86400)}d`;
 
 const inputCls =
-  "w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm text-[#0F172A] placeholder-[#CBD5E1] bg-white focus:outline-none focus:ring-2 focus:ring-[#1741D9]/20 focus:border-[#1741D9] transition-colors";
+  "w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-[#0F172A] placeholder-slate-300 bg-white focus:outline-none focus:border-[#1d67dd] transition-all";
 
 type Props = { marketplace: ReturnType<typeof useMarketplace> };
 
 const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white rounded-2xl border border-[#E2E8F0] p-6 ${className}`}>{children}</div>
+  <div className={`rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] p-6 ${className}`}>{children}</div>
 );
 
 const SectionHeader = ({ title, sub, badge }: { title: string; sub?: string; badge?: string }) => (
   <div className="flex items-start justify-between mb-5">
     <div>
-      <h3 className="font-bold text-[#0F172A] text-base">{title}</h3>
-      {sub && <p className="text-xs text-[#94A3B8] mt-0.5">{sub}</p>}
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">
+        Lender
+      </p>
+      <h3 className="font-bold text-[#0F172A] text-[15px]">{title}</h3>
+      {sub && <p className="text-[12px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
     {badge && (
-      <span className="text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-full shrink-0">
+      <span className="text-[11px] font-semibold text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full shrink-0 mt-0.5">
         {badge}
       </span>
     )}
@@ -162,7 +172,7 @@ export const LenderPanel = ({ marketplace }: Props) => {
         <button
           onClick={handleCreateOffer}
           disabled={isProcessing || !isInstanceReady || !minScore || !maxAmount || !deposit}
-          className="w-full py-3 bg-[#1741D9] text-white text-sm font-semibold rounded-xl hover:bg-[#1236BA] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
+          className="w-full py-3 bg-[#1741D9] text-white text-sm font-semibold rounded-full hover:bg-[#1236BA] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
         >
           {isFhevmError ? "FHE Unavailable" : !isInstanceReady ? "Initializing FHE..." : isProcessing ? "Encrypting & Submitting..." : "Create Lender Offer"}
         </button>
@@ -214,26 +224,35 @@ export const LenderPanel = ({ marketplace }: Props) => {
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Loan Request</label>
-            <select value={selectedLoanId} onChange={e => setSelectedLoanId(e.target.value)} className={inputCls}>
-              <option value="">Select a loan request…</option>
-              {activeLoans.map(l => (
-                <option key={String(l.id)} value={String(l.id)}>
-                  #{String(l.id)} — {fmtEth(l.plainRequestedAmount)} · {fmtDays(l.plainDuration)}
-                </option>
-              ))}
-            </select>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5 font-bold uppercase tracking-[0.12em] text-slate-500">Loan Request</label>
+            <Select value={selectedLoanId} onValueChange={(val) => setSelectedLoanId(val ?? "")}>
+              <SelectTrigger className="w-full h-[41px] border border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1d67dd] shadow-none data-[size=default]:h-[41px]">
+                <SelectValue placeholder="Select a loan request…" className="text-[#0F172A] opacity-100" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                {activeLoans.map(l => (
+                  <SelectItem key={String(l.id)} value={String(l.id)} className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5">
+                    #{String(l.id)} — {fmtEth(l.plainRequestedAmount)} · {fmtDays(l.plainDuration)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Your Offer</label>
-            <select value={selectedOfferId} onChange={e => setSelectedOfferId(e.target.value)} className={inputCls}>
-              <option value="">Select your offer…</option>
-              {activeOffers.map(o => (
-                <option key={String(o.id)} value={String(o.id)}>
-                  #{String(o.id)} — {fmtEth(o.availableFunds)} available
-                </option>
-              ))}
-            </select>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5 font-bold uppercase tracking-[0.12em] text-slate-500">Your Offer</label>
+            <Select value={selectedOfferId} onValueChange={(val) => setSelectedOfferId(val ?? "")}>
+              <SelectTrigger className="w-full h-[41px] border border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1d67dd] shadow-none data-[size=default]:h-[41px]">
+                <SelectValue placeholder="Select your offer…" className="text-[#0F172A] opacity-100" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                {activeOffers.map(o => (
+                  <SelectItem key={String(o.id)} value={String(o.id)} className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5">
+                    #{String(o.id)} — {fmtEth(o.availableFunds)} available
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -260,7 +279,7 @@ export const LenderPanel = ({ marketplace }: Props) => {
           <button
             onClick={handleCheckMatch}
             disabled={isProcessing || !selectedLoanId || !selectedOfferId}
-            className="flex-1 py-2.5 bg-[#EBF0FF] text-[#1741D9] text-sm font-semibold rounded-xl hover:bg-[#D8E3FF] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all min-w-[140px]"
+            className="flex-1 py-2.5 bg-[#EBF0FF] text-[#1741D9] text-sm font-semibold rounded-full hover:bg-[#D8E3FF] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all min-w-[140px]"
           >
             {isProcessing ? "Checking…" : "Check Match (FHE)"}
           </button>
