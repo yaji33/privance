@@ -10,11 +10,10 @@ export const Header = () => {
 
   return (
     <header className={`${isLanding ? "fixed" : "sticky"} top-0 z-30 w-full px-4 pt-4 sm:px-6`}>
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-5xl">
         {isLanding ? (
-          <div className="relative flex h-16 items-center justify-between rounded-full border border-white/80 bg-white/92 px-5 shadow-[0_12px_30px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl sm:px-7">
+          <div className="relative flex h-14 items-center justify-between rounded-full border border-white/80 bg-white/92 px-3 backdrop-blur-xl sm:px-3">
             <Link href="/" className="relative z-10 flex items-center gap-2 select-none">
-              <span className="text-[#2563EB] text-lg leading-none">•</span>
               <span className="text-[#0F172A] font-semibold text-xl leading-none tracking-tight">Privance</span>
             </Link>
 
@@ -28,7 +27,7 @@ export const Header = () => {
               <span className="hidden lg:inline text-sm font-medium text-[#64748B]">Connect to Wallet</span>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center rounded-full bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] transition-colors hover:bg-[#1D4ED8]"
+                className="inline-flex items-center justify-center rounded-full bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1D4ED8]"
               >
                 Launch App
               </Link>

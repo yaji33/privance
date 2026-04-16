@@ -31,24 +31,20 @@ export const Hero = () => {
       transition={{ duration: 0.65, ease: "easeOut" }}
       className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#d8ecff] via-[#6eaefc] to-[#1d67dd] px-4 pb-16 pt-16 text-white sm:px-8 sm:pb-20 sm:pt-24"
     >
-      {/* Background layers - Kept from your code */}
       <div className="absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_0%,rgba(96,165,250,0.18)_0%,rgba(21,25,34,0)_70%)]" />
       <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="absolute -right-24 bottom-16 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent via-[#6eaefc]/55 to-[#e9f3ff]" />
       
       <div className="relative z-10">
-        {/* Grid texture - Kept from your code */}
         <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(255,255,255,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.4)_1px,transparent_1px)] [background-size:52px_52px]" />
-        
-        {/* Heading - Kept from your code */}
         <motion.div {...fadeUp(0.2)} className="relative z-10 mx-auto mt-10 max-w-3xl text-center sm:mt-14">
           <h1 className="text-[2.25rem] font-bold leading-[1.08] tracking-tight text-white drop-shadow-sm sm:text-6xl sm:leading-[1.06]">
             Make Private Lending
             <br className="hidden sm:block" />
             <span className="relative inline-block">
               <span className="relative z-10">Fast & Secure with Privance</span>
-              <span className="absolute bottom-0.5 left-0 h-[6px] w-full rounded-full bg-white/25 blur-[2px]" />
+              <span className="absolute bottom-0.5 left-0 h-[6px] w-full rounded-full" />
             </span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-blue-50/90 sm:text-[16.5px]">
@@ -56,33 +52,28 @@ export const Hero = () => {
             <strong className="font-semibold text-white"> without exposing identity or balances.</strong>
           </p>
         </motion.div>
-
-        {/* Buttons - Kept from your code */}
         <motion.div {...fadeUp(0.32)} className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/dashboard"
-            className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-blue-600 px-7 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(29,103,221,0.55),inset_0_1px_0_rgba(255,255,255,0.18)] transition-all duration-200 hover:bg-blue-500 hover:shadow-[0_12px_30px_rgba(29,103,221,0.65)] active:scale-[0.97]"
+            className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-blue-600 px-7 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-blue-500 active:scale-[0.97]"
           >
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-white">
+            {/*<span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-white">
               <LockIcon />
-            </span>
+            </span>*/}
             Borrow privately
-            <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            {/*<span aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>*/}
           </Link>
           <button type="button" className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/50 bg-white/15 px-7 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-sm transition-all duration-200 hover:bg-white/22 hover:border-white/70 active:scale-[0.97]">
             Become a lender
           </button>
         </motion.div>
-
-        {/* --- NEW ENHANCED GRAPHICS SECTION --- */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.1, delay: 0.45, ease: "easeOut" }}
-          className="relative z-10 mt-16 grid grid-cols-1 gap-6 [perspective:1500px] md:mt-24 md:grid-cols-[1fr_1.2fr_1fr] md:items-center"
+          className="relative z-10 mt-16 flex justify-center [perspective:1500px] md:mt-24"
         >
-          {/* Left: Market Stats with Curve Perspective */}
-          <motion.div 
+          {/*motion.div 
             whileHover={{ rotateY: 6, x: 6, y: -2 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
             className="hidden origin-right rotate-y-[20deg] flex-col rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-xl md:flex"
@@ -98,13 +89,12 @@ export const Hero = () => {
                 <path d="M0 35 Q 20 35, 40 20 T 80 25 T 100 5 L 100 40 L 0 40 Z" fill="rgba(255,255,255,0.1)" />
               </svg>
             </div>
-          </motion.div>
+          </motion.div>*/}
 
-          {/* Center: Main Balance "Vault" (The Hero Card) */}
           <motion.div 
             animate={{ y: [0, -3, 0] }}
             transition={{ duration: 5.6, repeat: Infinity, ease: "easeInOut" }}
-            className="relative z-20 flex flex-col rounded-[2.5rem] border border-white/30 bg-white/15 p-8 shadow-[0_0_50px_rgba(255,255,255,0.1)] backdrop-blur-2xl"
+            className="relative z-20 flex w-full max-w-lg flex-col rounded-[2.5rem] border border-white/30 bg-white/15 p-8 shadow-[0_0_50px_rgba(255,255,255,0.1)] backdrop-blur-2xl"
           >
             <div className="text-center">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-100/70">Private Vault Balance</p>
@@ -126,7 +116,6 @@ export const Hero = () => {
               </div>
             </div>
 
-            {/* Meter Distribution Bar from Image */}
             <div className="mt-6 flex h-14 items-end justify-between gap-1">
               {[...Array(24)].map((_, i) => (
                 <motion.div
@@ -149,8 +138,7 @@ export const Hero = () => {
             </button>
           </motion.div>
 
-          {/* Right: Transaction Match UI */}
-          <motion.div 
+          {/*<motion.div 
             whileHover={{ rotateY: -6, x: -6, y: -2 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
             className="hidden origin-left -rotate-y-[20deg] flex-col rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-xl md:flex"
@@ -181,7 +169,7 @@ export const Hero = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </motion.div>*/}
         </motion.div>
       </div>
     </motion.section>
