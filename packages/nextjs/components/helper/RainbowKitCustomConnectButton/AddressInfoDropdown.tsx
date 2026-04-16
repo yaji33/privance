@@ -15,9 +15,10 @@ type AddressInfoDropdownProps = {
   displayName: string;
   ensAvatar?: string;
   blockExplorerAddressLink?: string;
+  forceDark?: boolean;
 };
 
-export const AddressInfoDropdown = ({ address, ensAvatar, displayName }: AddressInfoDropdownProps) => {
+export const AddressInfoDropdown = ({ address, ensAvatar, displayName, forceDark }: AddressInfoDropdownProps) => {
   const { disconnect } = useDisconnect();
   const checkSumAddress = getAddress(address);
 
@@ -31,13 +32,17 @@ export const AddressInfoDropdown = ({ address, ensAvatar, displayName }: Address
 
   useOutsideClick(dropdownRef, closeDropdown);
 
+  const btnClasses = forceDark
+    ? "!bg-white/10 !hover:bg-white/20 !border-white/20 !text-white"
+    : "!bg-[#0F172A]/5 !hover:bg-[#0F172A]/10 !border-[#0F172A]/10 !text-[#0F172A]";
+
   return (
     <>
       <details ref={dropdownRef} className="dropdown dropdown-end leading-3">
-        <summary className="btn btn-secondary btn-sm pl-0 pr-2 shadow-md dropdown-toggle gap-0 h-auto!">
+        <summary className={`btn ${btnClasses} !rounded-full btn-sm pl-1 pr-3 shadow-md dropdown-toggle gap-1 h-10!`}>
           <BlockieAvatar address={checkSumAddress} size={30} ensImage={ensAvatar} />
-          <span className="ml-2 mr-1">{displayName}</span>
-          <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
+          <span className="ml-1 text-[13px] font-semibold">{displayName}</span>
+          <ChevronDownIcon className="h-4 w-4 ml-1 opacity-70" />
         </summary>
         <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-center shadow-accent bg-base-200 rounded-box gap-1">
           <NetworkOptions hidden={!selectingNetwork} />

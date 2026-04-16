@@ -1,9 +1,27 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
 import { Hero } from "./_components/landing/Hero";
 import { HowItWorks } from "./_components/landing/HowItWorks";
 import { TheProblem } from "./_components/landing/TheProblem";
 import { ThePrivanceSolution } from "./_components/landing/ThePrivanceSolution";
 
 export default function Home() {
+  const { isConnected } = useAccount();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isConnected) {
+      router.replace("/dashboard");
+    }
+  }, [isConnected, router]);
+
+  if (isConnected) {
+    return null;
+  }
+
   return (
     <div className="w-full">
       <Hero />

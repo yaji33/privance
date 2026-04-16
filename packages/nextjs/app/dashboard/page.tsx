@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC] flex items-center justify-center px-4">
+      <div className="min-h-[calc(100vh-64px)] bg-white flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl border border-[#E8EDF8] shadow-sm p-10 text-center max-w-sm w-full">
           <div className="w-16 h-16 rounded-2xl bg-[#EBF0FF] grid place-items-center mx-auto mb-5">
             <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
@@ -49,15 +49,17 @@ export default function DashboardPage() {
           <p className="text-sm text-[#64748B] mb-6 leading-relaxed">
             Connect to Sepolia to access Privance — encrypted lending powered by Zama FHEVM.
           </p>
-          <RainbowKitCustomConnectButton />
+          <div className="flex justify-center">
+            <RainbowKitCustomConnectButton />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div className="min-h-[calc(100vh-64px)] bg-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
         <div className={`mb-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm border transition-opacity duration-300 ${
           !fhevmStatus || fhevmStatus === "ready"
             ? "opacity-0 pointer-events-none select-none border-transparent bg-transparent"
