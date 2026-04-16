@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/helper";
@@ -23,6 +24,7 @@ export const Header = () => {
       <div className="mx-auto max-w-5xl">
         <div className={`relative flex h-14 items-center justify-between rounded-full border ${headerBorder} ${headerBg} px-3 backdrop-blur-2xl sm:px-3 shadow-[0_8px_32px_0_rgba(31,38,135,0.07),inset_0_1px_0_rgba(255,255,255,0.9)]`}>
           <Link href="/" className="relative z-10 flex items-center gap-2 select-none">
+            <Image src="/privance-logo.svg" alt="Privance Logo" width={42} height={42}/>
             <span className={`${headerTextColor} font-semibold text-xl leading-none tracking-tight`}>Privance</span>
           </Link>
 
