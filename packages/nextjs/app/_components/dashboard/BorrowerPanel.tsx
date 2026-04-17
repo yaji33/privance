@@ -205,13 +205,13 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
               Duration
             </label>
-            <Select value={String(duration)} onValueChange={(v: string | null) => v && setDuration(Number(v))}>
-              <SelectTrigger className="w-full h-[41px] border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:border-[#1d67dd] transition-all">
-                <SelectValue placeholder="Select duration" />
+            <Select value={String(duration)} onValueChange={(v) => v && setDuration(Number(v))}>
+              <SelectTrigger className="w-full h-[41px] border border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1d67dd] shadow-none data-[size=default]:h-[41px]">
+                <SelectValue placeholder="Select duration" className="text-[#0F172A] opacity-100" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-slate-200 shadow-lg">
                 {DURATION_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={String(o.value)}>
+                  <SelectItem key={o.value} value={String(o.value)} className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5">
                     {o.label}
                   </SelectItem>
                 ))}

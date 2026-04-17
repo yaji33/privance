@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRepaymentTracker, type Agreement } from "~~/hooks/privance/useRepaymentTracker";
 
 const fmtEth = (wei: bigint | undefined) =>
@@ -10,86 +11,153 @@ const fmtEth = (wei: bigint | undefined) =>
 
 const fmtDate = (ts: bigint) =>
   ts > 0n
-    ? new Date(Number(ts) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(Number(ts) * 1000).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
     : "—";
 
 const fmtProgress = (repaid: bigint, total: bigint) =>
   total > 0n ? Math.min(100, Math.round((Number(repaid) * 100) / Number(total))) : 0;
 
 type Props = { repayment: ReturnType<typeof useRepaymentTracker> };
+type ViewTab = "borrower" | "lender";
 
-function AgreementStatusBadge({ ag }: { ag: Agreement }) {
+const ArrowIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </svg>
+);
+
+const SpinnerIcon = () => (
+  <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+);
+
+const EmptyIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+  </svg>
+);
+
+const AgreementStatusBadge = ({ ag }: { ag: Agreement }) => {
   if (ag.isDefaulted)
-    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#DC2626]">Defaulted</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-500 border border-red-100">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+        Defaulted
+      </span>
+    );
   if (ag.isRepaid)
-    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#F0FDF4] text-[#16A34A]">Repaid</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        Repaid
+      </span>
+    );
   if (ag.isActive)
-    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EBF0FF] text-[#1741D9]">Active</span>;
-  return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#F1F5F9] text-[#64748B]">Inactive</span>;
-}
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#EBF0FF] text-[#1741D9] border border-[#1741D9]/15">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#1741D9] animate-pulse" />
+        Active
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-400 border border-slate-100">
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+      Inactive
+    </span>
+  );
+};
 
-function AgreementRow({
+function AgreementCard({
   ag,
   role,
   isProcessing,
   onPay,
   onDefault,
+  index,
 }: {
   ag: Agreement;
   role: "borrower" | "lender";
   isProcessing: boolean;
   onPay: (id: bigint, amount: string) => void;
   onDefault: (id: bigint) => void;
+  index: number;
 }) {
   const [payAmount, setPayAmount] = useState("");
   const progress = fmtProgress(ag.amountRepaid, ag.totalRepaymentAmount);
 
+  const progressColor = ag.isRepaid
+    ? "bg-emerald-400"
+    : ag.isDefaulted
+    ? "bg-red-400"
+    : "bg-[#1741D9]";
+
+  const canAct = ag.isActive && !ag.isRepaid && !ag.isDefaulted;
+
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <span className="font-mono text-xs text-[#94A3B8]">Agreement #{String(ag.agreementId)}</span>
-          <div className="flex items-center gap-2 mt-1">
-            <AgreementStatusBadge ag={ag} />
-            <span className="text-xs text-[#64748B]">
-              {role === "borrower" ? "You borrowed" : "You lent"}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      className="bg-white rounded-[1.25rem] border border-[#E8EDF8] shadow-[0_4px_24px_-8px_rgba(29,103,221,0.09)] overflow-hidden"
+    >
+      <div className="px-6 pt-5 pb-4 flex items-start justify-between gap-4 border-b border-[#F1F5F9]">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
+              Agreement #{String(ag.agreementId)}
             </span>
+            <AgreementStatusBadge ag={ag} />
           </div>
+          <p className="text-[12px] text-slate-400">
+            {role === "borrower" ? "You borrowed" : "You lent"}
+          </p>
         </div>
-        <span className="text-lg font-bold text-[#0F172A]">{fmtEth(ag.principal)}</span>
+        <span className="text-[22px] font-bold text-[#0F172A] leading-none tabular-nums shrink-0">
+          {fmtEth(ag.principal)}
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#F1F5F9]">
         {[
-          { label: "Total Due", value: fmtEth(ag.totalRepaymentAmount) },
-          { label: "Repaid",    value: fmtEth(ag.amountRepaid) },
-          { label: "Due Date",  value: fmtDate(ag.dueDate) },
-          { label: "Interest",  value: `${(Number(ag.interestRate) / 100).toFixed(2)}%` },
+          { label: "Total Due",  value: fmtEth(ag.totalRepaymentAmount) },
+          { label: "Repaid",     value: fmtEth(ag.amountRepaid) },
+          { label: "Due Date",   value: fmtDate(ag.dueDate) },
+          { label: "Interest",   value: `${(Number(ag.interestRate) / 100).toFixed(2)}%` },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-[#F8FAFC] rounded-xl px-3 py-2.5">
-            <p className="text-xs text-[#94A3B8] mb-0.5">{label}</p>
-            <p className="text-sm font-semibold text-[#0F172A]">{value}</p>
+          <div key={label} className="bg-[#F8FAFC] px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8] mb-1">
+              {label}
+            </p>
+            <p className="text-[13px] font-bold text-[#0F172A] tabular-nums">{value}</p>
           </div>
         ))}
       </div>
 
-      <div className="mb-4">
-        <div className="flex justify-between text-xs text-[#94A3B8] mb-1">
-          <span>Repayment progress</span>
-          <span>{progress}%</span>
+      <div className="px-6 py-4 border-b border-[#F1F5F9]">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">
+            Repayment Progress
+          </p>
+          <p className="text-[11px] font-bold text-[#0F172A]">{progress}%</p>
         </div>
-        <div className="h-2 bg-[#F1F5F9] rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              ag.isRepaid ? "bg-[#16A34A]" : ag.isDefaulted ? "bg-[#DC2626]" : "bg-[#1741D9]"
-            }`}
-            style={{ width: `${progress}%` }}
+        <div className="h-[6px] bg-[#F1F5F9] rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.8, delay: index * 0.06 + 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className={`h-full rounded-full ${progressColor}`}
           />
         </div>
       </div>
 
-      {ag.isActive && !ag.isRepaid && !ag.isDefaulted && (
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F1F5F9]">
+      {canAct && (
+        <div className="px-6 py-4 flex flex-wrap gap-2.5 items-center">
           {role === "borrower" && (
             <div className="flex gap-2 flex-1 min-w-0">
               <input
@@ -99,13 +167,22 @@ function AgreementRow({
                 value={payAmount}
                 onChange={e => setPayAmount(e.target.value)}
                 placeholder="ETH amount"
-                className="flex-1 min-w-0 border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#0F172A] placeholder-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#1741D9]/20 focus:border-[#1741D9]"
+                className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3.5 py-2.5 text-[13px] text-[#0F172A] placeholder-[#CBD5E1]
+                           focus:outline-none focus:ring-2 focus:ring-[#1741D9]/20 focus:border-[#1741D9] transition-all"
               />
               <button
-                onClick={() => { if (payAmount) { onPay(ag.agreementId, payAmount); setPayAmount(""); } }}
+                onClick={() => {
+                  if (payAmount) {
+                    onPay(ag.agreementId, payAmount);
+                    setPayAmount("");
+                  }
+                }}
                 disabled={isProcessing || !payAmount}
-                className="px-4 py-2 bg-[#1741D9] text-white text-sm font-semibold rounded-lg hover:bg-[#1236BA] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#1741D9] text-white text-[13px] font-bold rounded-full
+                           hover:bg-[#1236BA] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all whitespace-nowrap
+                           shadow-[0_4px_14px_-4px_rgba(23,65,217,0.45)]"
               >
+                {isProcessing ? <SpinnerIcon /> : null}
                 {isProcessing ? "Paying…" : "Make Payment"}
               </button>
             </div>
@@ -113,17 +190,16 @@ function AgreementRow({
           <button
             onClick={() => onDefault(ag.agreementId)}
             disabled={isProcessing}
-            className="px-4 py-2 bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] text-sm font-semibold rounded-lg hover:bg-[#FEE2E2] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-red-50 border border-red-100 text-red-500 text-[13px] font-bold rounded-full
+                       hover:bg-red-100 hover:border-red-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
           >
             Check Default
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
-
-type ViewTab = "borrower" | "lender";
 
 export const RepaymentPanel = ({ repayment }: Props) => {
   const { address } = useAccount();
@@ -145,17 +221,25 @@ export const RepaymentPanel = ({ repayment }: Props) => {
   const borrowerCount = borrowerIds?.length ?? 0;
   const lenderCount = lenderIds?.length ?? 0;
 
+  const stats = useMemo(() => [
+    { label: "Total",     value: displayed.length },
+    { label: "Active",    value: displayed.filter(a => a.isActive && !a.isRepaid && !a.isDefaulted).length },
+    { label: "Repaid",    value: displayed.filter(a => a.isRepaid).length },
+    { label: "Defaulted", value: displayed.filter(a => a.isDefaulted).length },
+  ], [displayed]);
+
   return (
     <div className="space-y-5">
-      <div className="flex gap-1 bg-white border border-[#E2E8F0] rounded-xl p-1 w-fit">
+
+      <div className="flex gap-1 bg-slate-100/70 rounded-xl p-1 w-fit">
         {(["borrower", "lender"] as ViewTab[]).map(t => (
           <button
             key={t}
             onClick={() => setViewTab(t)}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+            className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all duration-200 ${
               viewTab === t
-                ? "bg-[#1741D9] text-white"
-                : "text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]"
+                ? "bg-white text-[#0F172A] shadow-sm"
+                : "text-slate-400 hover:text-slate-600"
             }`}
           >
             {t === "borrower" ? `Borrowed (${borrowerCount})` : `Lent (${lenderCount})`}
@@ -163,44 +247,76 @@ export const RepaymentPanel = ({ repayment }: Props) => {
         ))}
       </div>
 
-      {displayed.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Total Agreements", value: displayed.length },
-            { label: "Active",  value: displayed.filter(a => a.isActive && !a.isRepaid && !a.isDefaulted).length },
-            { label: "Repaid",  value: displayed.filter(a => a.isRepaid).length },
-            { label: "Defaulted", value: displayed.filter(a => a.isDefaulted).length },
-          ].map(({ label, value }) => (
-            <div key={label} className="bg-white border border-[#E2E8F0] rounded-xl px-4 py-3">
-              <p className="text-xs text-[#94A3B8]">{label}</p>
-              <p className="text-xl font-bold text-[#0F172A] mt-0.5">{value}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {displayed.length > 0 && (
+          <motion.div
+            key={viewTab + "-stats"}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+          >
+            {stats.map(({ label, value }) => (
+              <div
+                key={label}
+                className="bg-white border border-[#E8EDF8] rounded-[1.25rem] px-5 py-4 shadow-[0_2px_12px_-4px_rgba(29,103,221,0.07)]"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#94A3B8] mb-1.5">
+                  {label}
+                </p>
+                <p className="text-[26px] font-bold text-[#0F172A] leading-none tabular-nums">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {displayed.length === 0 ? (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-10 text-center">
-          <p className="text-sm text-[#94A3B8]">
-            {viewTab === "borrower"
-              ? "No agreements as borrower yet. Get a loan funded to see it here."
-              : "No agreements as lender yet. Fund a matched loan to see it here."}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {displayed.map(ag => (
-            <AgreementRow
-              key={String(ag.agreementId)}
-              ag={ag}
-              role={viewTab}
-              isProcessing={isProcessing}
-              onPay={makePayment}
-              onDefault={checkDefault}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {displayed.length === 0 ? (
+          <motion.div
+            key={viewTab + "-empty"}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white border border-[#E8EDF8] rounded-[1.25rem] py-16 px-8 text-center shadow-[0_2px_12px_-4px_rgba(29,103,221,0.07)]"
+          >
+            <div className="flex justify-center mb-4">
+              <EmptyIcon />
+            </div>
+            <p className="text-[13px] font-semibold text-slate-400 max-w-xs mx-auto leading-relaxed">
+              {viewTab === "borrower"
+                ? "No agreements as borrower yet. Get a loan funded to see it here."
+                : "No agreements as lender yet. Fund a matched loan to see it here."}
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key={viewTab + "-list"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="space-y-4"
+          >
+            {displayed.map((ag, i) => (
+              <AgreementCard
+                key={String(ag.agreementId)}
+                ag={ag}
+                role={viewTab}
+                isProcessing={isProcessing}
+                onPay={makePayment}
+                onDefault={checkDefault}
+                index={i}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
