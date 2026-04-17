@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 const fadeUp = (delay = 0) => ({
@@ -63,16 +64,26 @@ const txRows = [
   },
 ];
 
-const tradeoffs = [
+const options = [
   {
-    model: "Transparent on-chain",
-    reality:
-      "Every credit score, loan amount, and counterparty negotiation is permanently public. Competitors, MEV bots, and bad actors see your full financial picture.",
+    label: "Transparent on-chain",
+    tagLabel: "Fully public",
+    risks: [
+      { src: "/wallet-exposed.png", label: "Wallet exposed" },
+      { src: "/mev-bot.png",        label: "MEV bots watching" },
+      { src: "/credit-score.png",   label: "Credit score public" },
+      { src: "/counterparty.png",   label: "Counterparty visible" },
+    ],
   },
   {
-    model: "Centralized off-chain",
-    reality:
-      "Privacy comes at the cost of trust. A bank or protocol intermediary holds your data, sets the rules, and can freeze, censor, or misuse your position at will.",
+    label: "Centralized off-chain",
+    tagLabel: "Single point of failure",
+    risks: [
+      { src: "/bank.png",   label: "Bank holds your data" },
+      { src: "/censor.png", label: "Can censor anytime" },
+      { src: "/rules.png",  label: "Rules set by middleman" },
+      { src: "/freeze.png", label: "Can freeze position" },
+    ],
   },
 ];
 
@@ -86,6 +97,7 @@ export const TheProblem = () => {
       <div className="absolute right-[-8%] top-1/3 w-[520px] h-[520px] bg-[radial-gradient(circle,rgba(220,38,38,0.05)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-6 sm:px-8">
+
         <motion.div {...fadeUp(0)} className="max-w-2xl mb-20">
           <p className="text-[#1d67dd] font-bold uppercase tracking-[0.22em] text-[11px] mb-5">
             The Problem
@@ -102,7 +114,9 @@ export const TheProblem = () => {
             to a middleman. Neither option is acceptable for serious capital.
           </p>
         </motion.div>
+
         <div className="grid lg:grid-cols-[1.15fr_1fr] gap-8 items-start">
+
           <motion.div {...fadeUp(0.1)}>
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">
               What anyone can see, right now
@@ -122,13 +136,13 @@ export const TheProblem = () => {
                   <span>Gas <span className="text-[#1d67dd] font-medium">0.047 Gwei</span></span>
                 </div>
               </div>
-              <div className="bg-white border-b border-slate-100 px-4 py-2 flex items-center gap-4">
+              <div className="bg-white border-b border-slate-100 px-4 py-2.5 flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-full bg-slate-200" />
                   <span className="font-bold text-[13px] text-slate-700">Etherscan</span>
                 </div>
                 <div className="flex gap-3 ml-2 text-[11px] text-slate-400">
-                  {["Home", "Blockchain", "Tokens", "More"].map(n => (
+                  {["Home", "Blockchain", "Tokens", "More"].map((n) => (
                     <span key={n} className={n === "Blockchain" ? "text-[#1d67dd]" : ""}>{n}</span>
                   ))}
                 </div>
@@ -141,7 +155,7 @@ export const TheProblem = () => {
                 <table className="w-full text-[11px]">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
-                      {["Txn Hash", "Method", "Block", "Age", "From", "To", "Amount", "Txn Fee"].map(h => (
+                      {["Txn Hash", "Method", "Block", "Age", "From", "To", "Amount", "Txn Fee"].map((h) => (
                         <th key={h} className="text-left px-3 py-2.5 font-semibold text-slate-500 whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -180,33 +194,66 @@ export const TheProblem = () => {
               </div>
             </div>
           </motion.div>
-          <div className="space-y-5 lg:pt-8">
+
+          <div className="space-y-4 lg:pt-4">
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">
               Today&apos;s only options
             </p>
 
-            {tradeoffs.map((t, i) => (
+            {options.map((opt, i) => (
               <motion.div
-                key={t.model}
+                key={opt.label}
                 {...fadeUp(0.15 + i * 0.1)}
-                className="rounded-2xl border border-white/70 bg-white/40 backdrop-blur-sm p-7 shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)]"
+                className="rounded-2xl overflow-hidden bg-white/50 border border-[#1d67dd]/10 shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] backdrop-blur-sm"
               >
-                <h3 className="text-base font-bold text-slate-900 mb-3">{t.model}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{t.reality}</p>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                  <span className="text-[13px] font-bold text-slate-800">{opt.label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#1d67dd]/[0.08] text-[#1d67dd]">
+                    {opt.tagLabel}
+                  </span>
+                </div>
+
+                <div className="mx-5 h-px bg-[#1d67dd]/[0.08]" />
+
+                <div className="grid grid-cols-2 gap-2.5 px-5 py-4">
+                  {opt.risks.map((risk) => (
+                    <div
+                      key={risk.label}
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/60"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#1d67dd]/[0.06] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <Image
+                          src={risk.src}
+                          alt={risk.label}
+                          width={24}
+                          height={24}
+                          className="object-contain"
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                        {risk.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             ))}
 
             <motion.div
               {...fadeUp(0.35)}
-              className="rounded-2xl border border-[#1d67dd]/15 bg-[#1d67dd]/[0.04] p-7"
+              className="rounded-2xl border border-[#1d67dd]/15 bg-[#1d67dd]/[0.04] px-5 py-4 flex gap-3 items-start"
             >
-              <p className="text-slate-600 text-sm leading-relaxed">
-                The result: institutional capital stays off-chain. Retail
-                borrowers accept surveillance or forgo access entirely. The
-                promise of permissionless finance is broken before it begins.
+              <div className="w-[3px] self-stretch rounded-full bg-[#1d67dd]/30 flex-shrink-0" />
+              <p className="text-slate-500 text-[12.5px] leading-relaxed">
+                Institutional capital stays off-chain. Retail borrowers
+                accept surveillance or forgo access entirely.{" "}
+                <span className="text-slate-700 font-semibold">
+                  Permissionless finance — broken before it begins.
+                </span>
               </p>
             </motion.div>
           </div>
+
         </div>
       </div>
     </section>
