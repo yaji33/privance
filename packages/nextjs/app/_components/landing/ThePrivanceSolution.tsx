@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -19,13 +20,7 @@ const phases = [
     body: "FHE processes on-chain history + Aave health factor. Score stored as euint64 ciphertext — never plaintext.",
     foot: "Score range: 300–850",
     accent: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d67dd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        <circle cx="12" cy="16" r="1.5" fill="#1d67dd" stroke="none" />
-      </svg>
-    ),
+    src: "/phase-1.png",
   },
   {
     num: 2,
@@ -34,14 +29,7 @@ const phases = [
     body: "Min score threshold and max amount are encrypted on submission. The lender's criteria are invisible to all other parties.",
     foot: "Ciphertext in storage",
     accent: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d67dd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="9" y1="13" x2="15" y2="13" />
-        <line x1="9" y1="17" x2="12" y2="17" />
-      </svg>
-    ),
+    src: "/phase-2.png",
   },
   {
     num: 3,
@@ -49,13 +37,8 @@ const phases = [
     title: "Match via FHE comparison",
     body: "checkLoanMatch() computes score ≥ min AND amount ≤ max entirely in ciphertext. Result is an ebool — no raw numbers ever exposed.",
     foot: "On-chain, fully private",
-    accent: false,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="16 18 22 12 16 6" />
-        <polyline points="8 6 2 12 8 18" />
-      </svg>
-    ),
+    accent: true,
+    src: "/phase-3.png",
   },
   {
     num: 4,
@@ -64,18 +47,14 @@ const phases = [
     body: "The lender decrypts only the boolean outcome off-chain. On match, ETH transfers instantly to borrower; collateral locks in the vault.",
     foot: "Instant settlement",
     accent: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d67dd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
-    ),
+    src: "/phase-4.png",
   },
 ];
 
 const features = [
   {
     id: "01",
+    src: "/feature-1.png",
     title: "Two-tier encrypted credit score",
     body: "Tier 1 reads Privance repayment history directly from protocol state. Tier 2 reads your Aave V3 health factor — a public view, lifted into FHE. No oracles. No off-chain feeds. Score range: 300–850.",
     stat: "300–850",
@@ -83,6 +62,7 @@ const features = [
   },
   {
     id: "02",
+    src: "/feature-2.png",
     title: "Non-custodial collateral vault",
     body: "ETH collateral locks at funding via CollateralManager. On full repayment it releases to you automatically. On default it liquidates to the lender — no governance delay, no manual intervention.",
     stat: "0",
@@ -90,6 +70,7 @@ const features = [
   },
   {
     id: "03",
+    src: "/feature-3.png",
     title: "Offers stay live across multiple loans",
     body: "A single lender offer can fund multiple borrowers until liquidity is exhausted. Lenders set criteria once; the protocol matches continuously without re-posting.",
     stat: "1:N",
@@ -97,6 +78,7 @@ const features = [
   },
   {
     id: "04",
+    src: "/feature-4.png",
     title: "Exact-transfer, no MEV surface",
     body: "fundLoan() transfers precisely plainRequestedAmount — not the offer ceiling. Combined with encrypted criteria, there is no extractable price information for MEV bots to front-run.",
     stat: "0 ETH",
@@ -197,35 +179,41 @@ const LoanLifecycle = () => {
             <div
               ref={(el) => { cardRefs.current[i] = el; }}
               className="w-[420px] bg-white/60 backdrop-blur-sm border border-white/70 rounded-[20px] p-6 cursor-pointer
-                         transition-all duration-200 hover:-translate-y-1 hover:border-slate-300
-                         shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)]"
+                        transition-all duration-200 hover:-translate-y-1 hover:border-slate-300
+                        shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)]"
             >
-              <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
-                  phase.accent ? "bg-[#e9f3ff]" : "bg-slate-100"
-                }`}
-              >
-                {phase.icon}
-              </div>
-
-              <div className="flex items-center gap-2.5 mb-3">
-                <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0 ${
-                    phase.accent
-                      ? "bg-[#1d67dd] text-white"
-                      : "bg-slate-100 text-slate-500 border border-slate-200"
+              <div className="flex items-center gap-4 mb-4">
+                <div
+                  className={`w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                    phase.accent ? "bg-[#e9f3ff]" : "bg-slate-100"
                   }`}
                 >
-                  {phase.num}
-                </span>
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                  {phase.actor}
-                </span>
+                  <Image
+                    src={phase.src}
+                    alt={phase.title}
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="text-[12px] font-semibold flex-shrink-0 text-slate-900"
+                    >
+                      {phase.num}
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                      {phase.actor}
+                    </span>
+                  </div>
+                  <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
+                    {phase.title}
+                  </h3>
+                </div>
               </div>
 
-              <h3 className="text-[15px] font-semibold text-slate-900 mb-2 leading-snug">
-                {phase.title}
-              </h3>
               <p className="text-[13px] text-slate-500 leading-relaxed">{phase.body}</p>
 
               <div
@@ -299,7 +287,7 @@ export const ThePrivanceSolution = () => {
               </p>
               <Link
                 href="/dashboard"
-                className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1d67dd] px-6 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue-500 active:scale-[0.97]"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-[#1d67dd] px-6 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue-500 active:scale-[0.97]"
               >
                 Open Dashboard
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -316,14 +304,28 @@ export const ThePrivanceSolution = () => {
                   whileHover={{ y: -4 }}
                   className="group rounded-3xl border border-white/70 bg-white/40 backdrop-blur-sm p-7 shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] transition-all"
                 >
-                  <div className="mb-5 flex items-end gap-2">
+                <div className="flex items-center gap-4 mb-5">
+                  <div
+                    className={`w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-[#e9f3ff]`}
+                  >
+                    <Image
+                      src={f.src}
+                      alt={f.title}
+                      width={60}
+                      height={60}
+                      className="object-contain"
+                    />
+                  </div>
+
+                  <div className="flex flex-col">
                     <span className="text-[2rem] font-bold text-slate-900 leading-none tracking-tight">
                       {f.stat}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1d67dd] mb-0.5 leading-tight">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1d67dd] leading-tight mt-1">
                       {f.statLabel}
                     </span>
                   </div>
+                </div>
 
                   <div className="w-8 h-px bg-[#1d67dd]/30 mb-5 group-hover:w-12 transition-all duration-300" />
 
