@@ -206,6 +206,8 @@ TypeChain types are regenerated automatically into `packages/hardhat/types/`.
 
 All 54 tests pass against the Hardhat local network with the FHEVM mock coprocessor.
 
+Latest run result (Apr 17, 2026): **54 passing (6s)**.
+
 ```bash
 cd packages/hardhat
 npx hardhat test --network hardhat
@@ -297,6 +299,28 @@ Step 4 is the critical v2 addition: it authorizes `RepaymentTracker` to call `re
 | `FHE.select` | Encrypted conditional (used for clamping and capping) |
 | `FHE.allowThis` | Grant the contract access to its own ciphertext handles |
 | `FHE.allow` | Grant a specific address (borrower/lender) decryption rights |
+
+---
+
+## Known Limitations
+
+### CollateralManager — plaintext collateral amounts
+
+Collateral amounts in `CollateralManager.sol` are stored as plaintext `uint256`.
+Encrypting these fields would require rewriting `getTotalLockedCollateral()`,
+which iterates over a dynamic array and sums values — an operation that is
+prohibitively expensive with FHE without a full architectural redesign using
+Gateway round-trips.
+
+**Proposed future path:** Replace the summation loop with an encrypted running
+total updated incrementally on lock/release events, using `euint64` with
+`FHE.add()` and a single Gateway decryption for availability checks.
+
+### RepaymentTracker — plaintext repayment terms
+
+Principal, interest rate, and repayment amounts remain plaintext to support
+on-chain arithmetic in `makePayment()`. Access to these values is restricted
+to borrower, lender, and the marketplace contract via `getAgreementDetails()`.
 
 ---
 

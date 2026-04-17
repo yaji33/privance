@@ -416,7 +416,7 @@ const deployedContracts = {
       deployedOnBlock: 10644536,
     },
     LendingMarketplace: {
-      address: "0x8E9063ffd7645dA6c7e71aC87e7cA4D6E77678ab",
+      address: "0x1AeB1A78c6CDbC94Fb679bF913b35a15018047De",
       abi: [
         {
           inputs: [
@@ -1144,10 +1144,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 10644538,
+      deployedOnBlock: 10676716,
     },
     RepaymentTracker: {
-      address: "0x340425cAfA0b26f7Db1fdeEe7977899B6F7bca26",
+      address: "0x7De7048A9f366BCf3d15d4E7A16E413Fd8e57b1d",
       abi: [
         {
           inputs: [
@@ -1240,100 +1240,6 @@ const deployedContracts = {
           ],
           name: "PaymentMade",
           type: "event",
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-          ],
-          name: "agreements",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "agreementId",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "loanId",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "offerId",
-              type: "uint256",
-            },
-            {
-              internalType: "address",
-              name: "borrower",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "lender",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "principal",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "interestRate",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "duration",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "collateralAmount",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "totalRepaymentAmount",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "amountRepaid",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "dueDate",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "creationTime",
-              type: "uint256",
-            },
-            {
-              internalType: "bool",
-              name: "isActive",
-              type: "bool",
-            },
-            {
-              internalType: "bool",
-              name: "isRepaid",
-              type: "bool",
-            },
-            {
-              internalType: "bool",
-              name: "isDefaulted",
-              type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
         },
         {
           inputs: [
@@ -1679,7 +1585,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 10644537,
+      deployedOnBlock: 10676715,
     },
   },
 } as const;
