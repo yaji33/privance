@@ -24,7 +24,7 @@ contract RepaymentTracker {
         bool isDefaulted;
     }
 
-    mapping(uint256 => RepaymentAgreement) public agreements;
+    mapping(uint256 => RepaymentAgreement) private agreements;
     mapping(address => uint256[]) public borrowerAgreements;
     mapping(address => uint256[]) public lenderAgreements;
 
@@ -156,6 +156,12 @@ contract RepaymentTracker {
         bool isActive
     ) {
         RepaymentAgreement memory a = agreements[agreementId];
+        require(
+            msg.sender == a.borrower ||
+            msg.sender == a.lender ||
+            msg.sender == lendingMarketplace,
+            "Not authorized"
+        );
         return (
             a.borrower,
             a.lender,

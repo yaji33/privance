@@ -651,16 +651,20 @@ describe("Privance — LendingMarketplace v2", function () {
         await repayment.connect(signers.borrower).makePayment(agreementId, { value: payment })
       ).wait();
 
-      const agreement = await repayment.agreements(agreementId);
-      expect(agreement.amountRepaid).to.eq(payment);
+      const agreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementDetails(agreementId);
+      expect(agreement.amountPaid).to.eq(payment);
 
       const lenderBalAfter = await ethers.provider.getBalance(signers.lender.address);
       expect(lenderBalAfter - lenderBalBefore).to.eq(payment);
     });
 
     it("emits PaymentMade with correct remaining balance", async function () {
-      const agreement = await repayment.agreements(agreementId);
-      const totalDue = agreement.totalRepaymentAmount;
+      const agreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementDetails(agreementId);
+      const totalDue = agreement.totalDue;
       const payment = ethers.parseEther("0.01");
 
       await expect(
@@ -671,8 +675,10 @@ describe("Privance — LendingMarketplace v2", function () {
     });
 
     it("full repayment marks agreement as repaid and releases collateral", async function () {
-      const agreement = await repayment.agreements(agreementId);
-      const totalDue = agreement.totalRepaymentAmount;
+      const agreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementDetails(agreementId);
+      const totalDue = agreement.totalDue;
 
       await (
         await repayment
@@ -680,9 +686,10 @@ describe("Privance — LendingMarketplace v2", function () {
           .makePayment(agreementId, { value: totalDue })
       ).wait();
 
-      const updatedAgreement = await repayment.agreements(agreementId);
-      expect(updatedAgreement.isRepaid).to.eq(true);
-      expect(updatedAgreement.isActive).to.eq(false);
+      const updatedAgreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementStatus(agreementId);
+      expect(updatedAgreement).to.eq("REPAID");
 
       // Collateral should be released — borrower can now withdraw it
       const available = await collateral.getAvailableCollateral(signers.borrower.address);
@@ -690,21 +697,25 @@ describe("Privance — LendingMarketplace v2", function () {
     });
 
     it("emits AgreementRepaid on full repayment", async function () {
-      const agreement = await repayment.agreements(agreementId);
+      const agreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementDetails(agreementId);
       await expect(
         repayment
           .connect(signers.borrower)
-          .makePayment(agreementId, { value: agreement.totalRepaymentAmount }),
+          .makePayment(agreementId, { value: agreement.totalDue }),
       ).to.emit(repayment, "AgreementRepaid").withArgs(agreementId);
     });
 
     it("updates credit score after repayment: score improves (6 completed → 800)", async function () {
       // Repay current agreement first
-      const agreement = await repayment.agreements(agreementId);
+      const agreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementDetails(agreementId);
       await (
         await repayment
           .connect(signers.borrower)
-          .makePayment(agreementId, { value: agreement.totalRepaymentAmount })
+          .makePayment(agreementId, { value: agreement.totalDue })
       ).wait();
 
       // Now re-compute credit score
@@ -778,8 +789,10 @@ describe("Privance — LendingMarketplace v2", function () {
 
     it("does NOT default before the due date", async function () {
       await (await repayment.checkDefault(agreementId)).wait();
-      const agreement = await repayment.agreements(agreementId);
-      expect(agreement.isDefaulted).to.eq(false);
+      const agreementStatus = await repayment
+        .connect(signers.borrower)
+        .getAgreementStatus(agreementId);
+      expect(agreementStatus).to.eq("ACTIVE");
     });
 
     it("defaults and liquidates collateral after due date passes", async function () {
@@ -795,9 +808,10 @@ describe("Privance — LendingMarketplace v2", function () {
 
       const lenderBalAfter = await ethers.provider.getBalance(signers.lender.address);
 
-      const agreement = await repayment.agreements(agreementId);
-      expect(agreement.isDefaulted).to.eq(true);
-      expect(agreement.isActive).to.eq(false);
+      const agreementStatus = await repayment
+        .connect(signers.borrower)
+        .getAgreementStatus(agreementId);
+      expect(agreementStatus).to.eq("DEFAULTED");
 
       // Lender receives collateral minus gas
       expect(lenderBalAfter + gasUsed).to.be.closeTo(
@@ -816,11 +830,13 @@ describe("Privance — LendingMarketplace v2", function () {
     });
 
     it("cannot default a repaid agreement", async function () {
-      const agreement = await repayment.agreements(agreementId);
+      const agreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementDetails(agreementId);
       await (
         await repayment
           .connect(signers.borrower)
-          .makePayment(agreementId, { value: agreement.totalRepaymentAmount })
+          .makePayment(agreementId, { value: agreement.totalDue })
       ).wait();
 
       // Advance time and try to default
@@ -828,8 +844,10 @@ describe("Privance — LendingMarketplace v2", function () {
       await network.provider.send("evm_mine");
 
       await (await repayment.checkDefault(agreementId)).wait();
-      const updatedAgreement = await repayment.agreements(agreementId);
-      expect(updatedAgreement.isDefaulted).to.eq(false);
+      const updatedAgreement = await repayment
+        .connect(signers.borrower)
+        .getAgreementStatus(agreementId);
+      expect(updatedAgreement).to.eq("REPAID");
     });
 
     it("credit score penalized: 1 default → score drops to 400", async function () {
