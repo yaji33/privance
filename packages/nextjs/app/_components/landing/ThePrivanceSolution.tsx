@@ -236,7 +236,7 @@ export const ThePrivanceSolution = () => {
     <div className="relative overflow-hidden bg-[#e9f3ff]">
       <div className="absolute inset-0 opacity-[0.18] bg-[linear-gradient(rgba(29,103,221,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(29,103,221,0.12)_1px,transparent_1px)] [background-size:52px_52px]" />
 
-      <section id="solution" className="relative pt-24 pb-8 sm:pt-32 sm:pb-12">
+      <section id="the-solution" className="relative pt-24 pb-8 sm:pt-32 sm:pb-12">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
 
           <div className="grid lg:grid-cols-[1.3fr_1fr] gap-12 items-end mb-16">
@@ -365,16 +365,17 @@ export const ThePrivanceSolution = () => {
             <motion.div {...fadeUp(0.4)} className="flex justify-center">
               <Link
                 href="/dashboard"
-                className="group relative flex h-16 items-center gap-3 px-14 bg-white text-[#1d67dd] font-bold text-xl rounded-2xl shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+                className="group relative flex h-16 items-center gap-3 px-14 bg-white text-[#1d67dd] font-bold text-xl rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 Get Started Now
+                {/*
                 <svg
                   className="transition-transform duration-300 group-hover:translate-x-1.5"
                   width="22" height="22" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"
                 >
                   <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+                </svg>*/}
               </Link>
             </motion.div>
           </div>

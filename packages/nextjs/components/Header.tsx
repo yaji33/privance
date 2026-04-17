@@ -53,9 +53,9 @@ export const Header = ({ agreementCount = 0 }: HeaderProps) => {
           >
             {!isConnected ? (
               <div className="flex items-center gap-8">
-                <a href="/#problem"  className={`${headerNavHover} transition-colors`}>Problem</a>
-                <a href="/#solution" className={`${headerNavHover} transition-colors`}>Solution</a>
-                <a href="/#features" className={`${headerNavHover} transition-colors`}>Features</a>
+                <a href="/#the-problem"  className={`${headerNavHover} transition-colors`}>Problem</a>
+                <a href="/#the-solution" className={`${headerNavHover} transition-colors`}>Solution</a>
+                <a href="/#features"     className={`${headerNavHover} transition-colors`}>Features</a>
               </div>
             ) : (
               TABS.map(tab => {
