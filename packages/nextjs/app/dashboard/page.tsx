@@ -10,22 +10,27 @@ import { RainbowKitCustomConnectButton } from "~~/components/helper/RainbowKitCu
 import { useCollateral }       from "~~/hooks/privance/useCollateral";
 import { useMarketplace }      from "~~/hooks/privance/useMarketplace";
 import { useRepaymentTracker } from "~~/hooks/privance/useRepaymentTracker";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import { DEFAULT_TAB, type Tab } from "~~/components/Header";
 
 const MOCK_CHAINS = { 31337: "http://localhost:8545" } as const;
 
 export default function DashboardPage() {
   const { isConnected, chain } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const searchParams = useSearchParams();
   const router       = useRouter();
 
   const activeTab = (searchParams.get("tab") as Tab) ?? DEFAULT_TAB;
 
   const provider = useMemo(() => {
-    if (typeof window === "undefined") return undefined;
-    return (window as any).ethereum;
-  }, []);
+    if (!walletClient) return undefined;
+    return {
+      request: async (args: any) => walletClient.request(args),
+      on: () => undefined,
+      removeListener: () => undefined,
+    };
+  }, [walletClient]);
 
   const { instance, status: fhevmStatus, error: fhevmError } = useFhevm({
     provider,
@@ -33,6 +38,21 @@ export default function DashboardPage() {
     initialMockChains: MOCK_CHAINS,
     enabled: isConnected,
   });
+
+  const fhevmErrorMessage = useMemo(() => {
+    const raw = fhevmError ? String(fhevmError) : "";
+    if (!raw) return "Try refreshing the page.";
+
+    if (raw.includes("eip712Domain") || raw.includes("BAD_DATA")) {
+      return "Wallet/provider mismatch detected. If multiple wallets are installed, use only the wallet connected in this session, then reconnect and refresh.";
+    }
+
+    if (raw.includes("does not support threads") || raw.includes("Cross-Origin-Opener-Policy")) {
+      return "Browser blocked required FHE worker features. Use an extension configuration without conflicting injected providers, then refresh.";
+    }
+
+    return raw;
+  }, [fhevmError]);
 
   const marketplace = useMarketplace({ instance, fhevmStatus, fhevmError });
   const collateral  = useCollateral();
@@ -78,7 +98,7 @@ export default function DashboardPage() {
           <span>{fhevmStatus === "error" ? "⚠" : "⏳"}</span>
           <span className="font-medium">
             {fhevmStatus === "error"
-              ? `FHE initialization failed${fhevmError ? `: ${String(fhevmError)}` : ". Try refreshing the page."}`
+              ? `FHE initialization failed: ${fhevmErrorMessage}`
               : "Initializing FHE encryption layer — this takes a few seconds on first load…"}
           </span>
         </div>
