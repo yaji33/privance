@@ -12,8 +12,7 @@ const fmt = (wei: bigint | undefined): string =>
   wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
 
 export const CollateralCard = ({ collateral }: Props) => {
-  const { availableCollateral, totalCollateral, depositCollateral, withdrawCollateral, isProcessing } =
-    collateral;
+  const { availableCollateral, totalCollateral, depositCollateral, withdrawCollateral, isProcessing } = collateral;
 
   const [depositAmt, setDepositAmt] = useState("");
   const [withdrawAmt, setWithdrawAmt] = useState("");
@@ -40,9 +39,7 @@ export const CollateralCard = ({ collateral }: Props) => {
     <div className="rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] p-6">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">
-            Vault
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">Vault</p>
           <h3 className="font-bold text-[#0F172A] text-[15px]">Collateral Vault</h3>
           <p className="text-[12px] text-slate-400 mt-0.5">Non-custodial · Auto-liquidating</p>
         </div>
@@ -50,20 +47,12 @@ export const CollateralCard = ({ collateral }: Props) => {
 
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-1.5">
-            Available
-          </p>
-          <p className="text-[18px] font-bold text-[#0F172A] leading-none">
-            {fmt(availableCollateral)}
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-1.5">Available</p>
+          <p className="text-[18px] font-bold text-[#0F172A] leading-none">{fmt(availableCollateral)}</p>
         </div>
         <div className="rounded-xl border border-[#1d67dd]/10 bg-[#F8FAFF] px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1d67dd]/60 mb-1.5">
-            Locked
-          </p>
-          <p className="text-[18px] font-bold text-[#1d67dd] leading-none">
-            {fmt(lockedCollateral)}
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1d67dd]/60 mb-1.5">Locked</p>
+          <p className="text-[18px] font-bold text-[#1d67dd] leading-none">{fmt(lockedCollateral)}</p>
         </div>
       </div>
 
@@ -73,9 +62,7 @@ export const CollateralCard = ({ collateral }: Props) => {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 text-[12px] font-bold rounded-lg capitalize transition-all ${
-              activeTab === tab
-                ? "bg-white text-[#0F172A] shadow-sm"
-                : "text-slate-400 hover:text-slate-600"
+              activeTab === tab ? "bg-white text-[#0F172A] shadow-sm" : "text-slate-400 hover:text-slate-600"
             }`}
           >
             {tab}

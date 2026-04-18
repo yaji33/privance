@@ -13,7 +13,9 @@ export const RainbowKitCustomConnectButton = ({ forceDark }: { forceDark?: boole
 
   const textColor = forceDark ? "text-white/90" : "text-[#0F172A]";
   const subTextColor = forceDark ? "text-white/50" : "text-[#64748B]";
-  const btnBg = forceDark ? "bg-white/15 hover:bg-white/25 border-white/20" : "bg-[#0F172A]/5 hover:bg-[#0F172A]/10 border-[#0F172A]/10";
+  const btnBg = forceDark
+    ? "bg-white/15 hover:bg-white/25 border-white/20"
+    : "bg-[#0F172A]/5 hover:bg-[#0F172A]/10 border-[#0F172A]/10";
   const btnTextColor = forceDark ? "text-white" : "text-[#0F172A]";
 
   return (
@@ -46,7 +48,10 @@ export const RainbowKitCustomConnectButton = ({ forceDark }: { forceDark?: boole
               return (
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col items-end mr-1">
-                    <Balance address={account.address as Address} className={`min-h-0 h-auto font-medium text-[13px] ${textColor}`} />
+                    <Balance
+                      address={account.address as Address}
+                      className={`min-h-0 h-auto font-medium text-[13px] ${textColor}`}
+                    />
                     <span className={`text-[10px] uppercase tracking-wider ${subTextColor}`}>{chain.name}</span>
                   </div>
                   <AddressInfoDropdown

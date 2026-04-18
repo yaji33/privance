@@ -68,7 +68,10 @@ export const useRepaymentTracker = () => {
     const ids: bigint[] = [];
     for (const id of [...((borrowerIds as bigint[]) ?? []), ...((lenderIds as bigint[]) ?? [])]) {
       const key = id.toString();
-      if (!seen.has(key)) { seen.add(key); ids.push(id); }
+      if (!seen.has(key)) {
+        seen.add(key);
+        ids.push(id);
+      }
     }
     return ids;
   }, [borrowerIds, lenderIds]);
@@ -93,24 +96,26 @@ export const useRepaymentTracker = () => {
     return rawAgreements.flatMap((item, i) => {
       if (item.status !== "success" || !item.result) return [];
       const r = item.result as any;
-      return [{
-        agreementId:          myAgreementIds[i],
-        loanId:               r.loanId               ?? r[1],
-        offerId:              r.offerId              ?? r[2],
-        borrower:             r.borrower             ?? r[3],
-        lender:               r.lender               ?? r[4],
-        principal:            r.principal            ?? r[5],
-        interestRate:         r.interestRate         ?? r[6],
-        duration:             r.duration             ?? r[7],
-        collateralAmount:     r.collateralAmount     ?? r[8],
-        totalRepaymentAmount: r.totalRepaymentAmount ?? r[9],
-        amountRepaid:         r.amountRepaid         ?? r[10],
-        dueDate:              r.dueDate              ?? r[11],
-        creationTime:         r.creationTime         ?? r[12],
-        isActive:             r.isActive             ?? r[13],
-        isRepaid:             r.isRepaid             ?? r[14],
-        isDefaulted:          r.isDefaulted          ?? r[15],
-      } as Agreement];
+      return [
+        {
+          agreementId: myAgreementIds[i],
+          loanId: r.loanId ?? r[1],
+          offerId: r.offerId ?? r[2],
+          borrower: r.borrower ?? r[3],
+          lender: r.lender ?? r[4],
+          principal: r.principal ?? r[5],
+          interestRate: r.interestRate ?? r[6],
+          duration: r.duration ?? r[7],
+          collateralAmount: r.collateralAmount ?? r[8],
+          totalRepaymentAmount: r.totalRepaymentAmount ?? r[9],
+          amountRepaid: r.amountRepaid ?? r[10],
+          dueDate: r.dueDate ?? r[11],
+          creationTime: r.creationTime ?? r[12],
+          isActive: r.isActive ?? r[13],
+          isRepaid: r.isRepaid ?? r[14],
+          isDefaulted: r.isDefaulted ?? r[15],
+        } as Agreement,
+      ];
     });
   }, [rawAgreements, myAgreementIds]);
 

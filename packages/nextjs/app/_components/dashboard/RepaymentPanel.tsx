@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import { ethers } from "ethers";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRepaymentTracker, type Agreement } from "~~/hooks/privance/useRepaymentTracker";
+import { AnimatePresence, motion } from "framer-motion";
+import { useAccount } from "wagmi";
+import { type Agreement, useRepaymentTracker } from "~~/hooks/privance/useRepaymentTracker";
 
 const fmtEth = (wei: bigint | undefined) =>
   wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
@@ -24,20 +24,32 @@ const fmtProgress = (repaid: bigint, total: bigint) =>
 type Props = { repayment: ReturnType<typeof useRepaymentTracker> };
 type ViewTab = "borrower" | "lender";
 
-const ArrowIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
-);
-
 const SpinnerIcon = () => (
-  <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+  <svg
+    className="animate-spin"
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
   </svg>
 );
 
 const EmptyIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300">
+  <svg
+    width="28"
+    height="28"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="text-slate-300"
+  >
     <rect x="2" y="5" width="20" height="14" rx="2" />
     <path d="M2 10h20" />
   </svg>
@@ -91,11 +103,7 @@ function AgreementCard({
   const [payAmount, setPayAmount] = useState("");
   const progress = fmtProgress(ag.amountRepaid, ag.totalRepaymentAmount);
 
-  const progressColor = ag.isRepaid
-    ? "bg-emerald-400"
-    : ag.isDefaulted
-    ? "bg-red-400"
-    : "bg-[#1741D9]";
+  const progressColor = ag.isRepaid ? "bg-emerald-400" : ag.isDefaulted ? "bg-red-400" : "bg-[#1741D9]";
 
   const canAct = ag.isActive && !ag.isRepaid && !ag.isDefaulted;
 
@@ -114,9 +122,7 @@ function AgreementCard({
             </span>
             <AgreementStatusBadge ag={ag} />
           </div>
-          <p className="text-[12px] text-slate-400">
-            {role === "borrower" ? "You borrowed" : "You lent"}
-          </p>
+          <p className="text-[12px] text-slate-400">{role === "borrower" ? "You borrowed" : "You lent"}</p>
         </div>
         <span className="text-[22px] font-bold text-[#0F172A] leading-none tabular-nums shrink-0">
           {fmtEth(ag.principal)}
@@ -125,15 +131,13 @@ function AgreementCard({
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#F1F5F9]">
         {[
-          { label: "Total Due",  value: fmtEth(ag.totalRepaymentAmount) },
-          { label: "Repaid",     value: fmtEth(ag.amountRepaid) },
-          { label: "Due Date",   value: fmtDate(ag.dueDate) },
-          { label: "Interest",   value: `${(Number(ag.interestRate) / 100).toFixed(2)}%` },
+          { label: "Total Due", value: fmtEth(ag.totalRepaymentAmount) },
+          { label: "Repaid", value: fmtEth(ag.amountRepaid) },
+          { label: "Due Date", value: fmtDate(ag.dueDate) },
+          { label: "Interest", value: `${(Number(ag.interestRate) / 100).toFixed(2)}%` },
         ].map(({ label, value }) => (
           <div key={label} className="bg-[#F8FAFC] px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8] mb-1">
-              {label}
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8] mb-1">{label}</p>
             <p className="text-[13px] font-bold text-[#0F172A] tabular-nums">{value}</p>
           </div>
         ))}
@@ -141,9 +145,7 @@ function AgreementCard({
 
       <div className="px-6 py-4 border-b border-[#F1F5F9]">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">
-            Repayment Progress
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Repayment Progress</p>
           <p className="text-[11px] font-bold text-[#0F172A]">{progress}%</p>
         </div>
         <div className="h-[6px] bg-[#F1F5F9] rounded-full overflow-hidden">
@@ -221,25 +223,25 @@ export const RepaymentPanel = ({ repayment }: Props) => {
   const borrowerCount = borrowerIds?.length ?? 0;
   const lenderCount = lenderIds?.length ?? 0;
 
-  const stats = useMemo(() => [
-    { label: "Total",     value: displayed.length },
-    { label: "Active",    value: displayed.filter(a => a.isActive && !a.isRepaid && !a.isDefaulted).length },
-    { label: "Repaid",    value: displayed.filter(a => a.isRepaid).length },
-    { label: "Defaulted", value: displayed.filter(a => a.isDefaulted).length },
-  ], [displayed]);
+  const stats = useMemo(
+    () => [
+      { label: "Total", value: displayed.length },
+      { label: "Active", value: displayed.filter(a => a.isActive && !a.isRepaid && !a.isDefaulted).length },
+      { label: "Repaid", value: displayed.filter(a => a.isRepaid).length },
+      { label: "Defaulted", value: displayed.filter(a => a.isDefaulted).length },
+    ],
+    [displayed],
+  );
 
   return (
     <div className="space-y-5">
-
       <div className="flex gap-1 bg-slate-100/70 rounded-xl p-1 w-fit">
         {(["borrower", "lender"] as ViewTab[]).map(t => (
           <button
             key={t}
             onClick={() => setViewTab(t)}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all duration-200 ${
-              viewTab === t
-                ? "bg-white text-[#0F172A] shadow-sm"
-                : "text-slate-400 hover:text-slate-600"
+              viewTab === t ? "bg-white text-[#0F172A] shadow-sm" : "text-slate-400 hover:text-slate-600"
             }`}
           >
             {t === "borrower" ? `Borrowed (${borrowerCount})` : `Lent (${lenderCount})`}
@@ -262,12 +264,8 @@ export const RepaymentPanel = ({ repayment }: Props) => {
                 key={label}
                 className="bg-white border border-[#E8EDF8] rounded-[1.25rem] px-5 py-4 shadow-[0_2px_12px_-4px_rgba(29,103,221,0.07)]"
               >
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#94A3B8] mb-1.5">
-                  {label}
-                </p>
-                <p className="text-[26px] font-bold text-[#0F172A] leading-none tabular-nums">
-                  {value}
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#94A3B8] mb-1.5">{label}</p>
+                <p className="text-[26px] font-bold text-[#0F172A] leading-none tabular-nums">{value}</p>
               </div>
             ))}
           </motion.div>
@@ -316,7 +314,6 @@ export const RepaymentPanel = ({ repayment }: Props) => {
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 };

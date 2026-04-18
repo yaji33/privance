@@ -1,16 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import { ethers } from "ethers";
+import { useAccount } from "wagmi";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~~/components/ui/select";
 import { useMarketplace } from "~~/hooks/privance/useMarketplace";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~~/components/ui/select";
 
 const fmtEth = (wei: bigint | undefined) =>
   wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
@@ -24,15 +18,17 @@ const inputCls =
 type Props = { marketplace: ReturnType<typeof useMarketplace> };
 
 const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] p-6 ${className}`}>{children}</div>
+  <div
+    className={`rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] p-6 ${className}`}
+  >
+    {children}
+  </div>
 );
 
 const SectionHeader = ({ title, sub, badge }: { title: string; sub?: string; badge?: string }) => (
   <div className="flex items-start justify-between mb-5">
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">
-        Lender
-      </p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">Lender</p>
       <h3 className="font-bold text-[#0F172A] text-[15px]">{title}</h3>
       {sub && <p className="text-[12px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
@@ -47,25 +43,37 @@ const SectionHeader = ({ title, sub, badge }: { title: string; sub?: string; bad
 export const LenderPanel = ({ marketplace }: Props) => {
   const { address } = useAccount();
   const {
-    loanList, offerList, nextOfferId,
-    createLenderOffer, cancelLenderOffer,
-    checkLoanMatch, fundLoan,
-    canDecrypt, decrypt, isDecrypting,
-    decryptedMatchResult, checkedPair,
-    isProcessing, isInstanceReady, isFhevmError,
+    loanList,
+    offerList,
+    nextOfferId,
+    createLenderOffer,
+    cancelLenderOffer,
+    checkLoanMatch,
+    fundLoan,
+    canDecrypt,
+    decrypt,
+    isDecrypting,
+    decryptedMatchResult,
+    checkedPair,
+    isProcessing,
+    isInstanceReady,
+    isFhevmError,
   } = marketplace;
 
-  const [minScore, setMinScore]       = useState("500");
-  const [maxAmount, setMaxAmount]     = useState("0.1");
+  const [minScore, setMinScore] = useState("500");
+  const [maxAmount, setMaxAmount] = useState("0.1");
   const [collateralPct, setCollateral] = useState("5000");
-  const [interestBps, setInterest]    = useState("500");
-  const [deposit, setDeposit]         = useState("0.5");
+  const [interestBps, setInterest] = useState("500");
+  const [deposit, setDeposit] = useState("0.5");
 
-  const [selectedLoanId, setSelectedLoanId]   = useState("");
+  const [selectedLoanId, setSelectedLoanId] = useState("");
   const [selectedOfferId, setSelectedOfferId] = useState("");
 
-  const activeLoans  = useMemo(() => loanList.filter(l => l.isActive && !l.isFunded), [loanList]);
-  const myOffers     = useMemo(() => offerList.filter(o => o.lender?.toLowerCase() === address?.toLowerCase()), [offerList, address]);
+  const activeLoans = useMemo(() => loanList.filter(l => l.isActive && !l.isFunded), [loanList]);
+  const myOffers = useMemo(
+    () => offerList.filter(o => o.lender?.toLowerCase() === address?.toLowerCase()),
+    [offerList, address],
+  );
   const activeOffers = useMemo(() => myOffers.filter(o => o.isActive), [myOffers]);
 
   const matchIsCompatible =
@@ -107,7 +115,9 @@ export const LenderPanel = ({ marketplace }: Props) => {
               <thead>
                 <tr className="border-b border-[#F1F5F9]">
                   {["ID", "Borrower", "Amount", "Duration", "Action"].map(h => (
-                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">{h}</th>
+                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -120,7 +130,9 @@ export const LenderPanel = ({ marketplace }: Props) => {
                     <td className="py-3 px-1 text-[#64748B]">{fmtDays(loan.plainDuration)}</td>
                     <td className="py-3 px-1">
                       <button
-                        onClick={() => { setSelectedLoanId(String(loan.id)); }}
+                        onClick={() => {
+                          setSelectedLoanId(String(loan.id));
+                        }}
                         className="text-xs font-semibold text-[#1741D9] hover:underline"
                       >
                         Select
@@ -143,24 +155,60 @@ export const LenderPanel = ({ marketplace }: Props) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-xs font-semibold text-[#374151] mb-1.5">Min Credit Score</label>
-            <input type="number" value={minScore} onChange={e => setMinScore(e.target.value)} placeholder="e.g. 500" className={inputCls} />
+            <input
+              type="number"
+              value={minScore}
+              onChange={e => setMinScore(e.target.value)}
+              placeholder="e.g. 500"
+              className={inputCls}
+            />
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#374151] mb-1.5">Max Loan Amount (ETH)</label>
-            <input type="number" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} placeholder="e.g. 0.1" className={inputCls} />
+            <input
+              type="number"
+              value={maxAmount}
+              onChange={e => setMaxAmount(e.target.value)}
+              placeholder="e.g. 0.1"
+              className={inputCls}
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Collateral Req. <span className="text-[#94A3B8] font-normal">(bps — 5000 = 50%)</span></label>
-            <input type="number" value={collateralPct} onChange={e => setCollateral(e.target.value)} placeholder="5000" className={inputCls} />
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">
+              Collateral Req. <span className="text-[#94A3B8] font-normal">(bps — 5000 = 50%)</span>
+            </label>
+            <input
+              type="number"
+              value={collateralPct}
+              onChange={e => setCollateral(e.target.value)}
+              placeholder="5000"
+              className={inputCls}
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-1.5">Interest Rate <span className="text-[#94A3B8] font-normal">(bps — 500 = 5%)</span></label>
-            <input type="number" value={interestBps} onChange={e => setInterest(e.target.value)} placeholder="500" className={inputCls} />
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5">
+              Interest Rate <span className="text-[#94A3B8] font-normal">(bps — 500 = 5%)</span>
+            </label>
+            <input
+              type="number"
+              value={interestBps}
+              onChange={e => setInterest(e.target.value)}
+              placeholder="500"
+              className={inputCls}
+            />
           </div>
         </div>
         <div className="mb-5">
-          <label className="block text-xs font-semibold text-[#374151] mb-1.5">Deposit ETH <span className="text-[#94A3B8] font-normal">(funds the offer pool)</span></label>
-          <input type="number" value={deposit} onChange={e => setDeposit(e.target.value)} placeholder="e.g. 0.5" className={inputCls} />
+          <label className="block text-xs font-semibold text-[#374151] mb-1.5">
+            Deposit ETH <span className="text-[#94A3B8] font-normal">(funds the offer pool)</span>
+          </label>
+          <input
+            type="number"
+            value={deposit}
+            onChange={e => setDeposit(e.target.value)}
+            placeholder="e.g. 0.5"
+            className={inputCls}
+          />
         </div>
         <div className="flex items-center gap-2 text-xs text-[#94A3B8] mb-4">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -174,12 +222,21 @@ export const LenderPanel = ({ marketplace }: Props) => {
           disabled={isProcessing || !isInstanceReady || !minScore || !maxAmount || !deposit}
           className="w-full py-3 bg-[#1741D9] text-white text-sm font-semibold rounded-full hover:bg-[#1236BA] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
         >
-          {isFhevmError ? "FHE Unavailable" : !isInstanceReady ? "Initializing FHE..." : isProcessing ? "Encrypting & Submitting..." : "Create Lender Offer"}
+          {isFhevmError
+            ? "FHE Unavailable"
+            : !isInstanceReady
+              ? "Initializing FHE..."
+              : isProcessing
+                ? "Encrypting & Submitting..."
+                : "Create Lender Offer"}
         </button>
       </SectionCard>
 
       <SectionCard>
-        <SectionHeader title="My Active Offers" badge={`${activeOffers.length} offer${activeOffers.length !== 1 ? "s" : ""}`} />
+        <SectionHeader
+          title="My Active Offers"
+          badge={`${activeOffers.length} offer${activeOffers.length !== 1 ? "s" : ""}`}
+        />
         {activeOffers.length === 0 ? (
           <p className="text-sm text-[#94A3B8] py-4 text-center">You have no active offers.</p>
         ) : (
@@ -188,7 +245,9 @@ export const LenderPanel = ({ marketplace }: Props) => {
               <thead>
                 <tr className="border-b border-[#F1F5F9]">
                   {["ID", "Available", "Max Loan", "Collateral", "Interest", ""].map(h => (
-                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">{h}</th>
+                    <th key={h} className="pb-2.5 text-left text-xs font-semibold text-[#94A3B8] px-1">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -224,14 +283,20 @@ export const LenderPanel = ({ marketplace }: Props) => {
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-1.5 font-bold uppercase tracking-[0.12em] text-slate-500">Loan Request</label>
-            <Select value={selectedLoanId} onValueChange={(val) => setSelectedLoanId(val ?? "")}>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5 font-bold uppercase tracking-[0.12em] text-slate-500">
+              Loan Request
+            </label>
+            <Select value={selectedLoanId} onValueChange={val => setSelectedLoanId(val ?? "")}>
               <SelectTrigger className="w-full h-[41px] border border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1d67dd] shadow-none data-[size=default]:h-[41px]">
                 <SelectValue placeholder="Select a loan request…" className="text-[#0F172A] opacity-100" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-slate-200 shadow-lg">
                 {activeLoans.map(l => (
-                  <SelectItem key={String(l.id)} value={String(l.id)} className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5">
+                  <SelectItem
+                    key={String(l.id)}
+                    value={String(l.id)}
+                    className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5"
+                  >
                     #{String(l.id)} — {fmtEth(l.plainRequestedAmount)} · {fmtDays(l.plainDuration)}
                   </SelectItem>
                 ))}
@@ -240,14 +305,20 @@ export const LenderPanel = ({ marketplace }: Props) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-1.5 font-bold uppercase tracking-[0.12em] text-slate-500">Your Offer</label>
-            <Select value={selectedOfferId} onValueChange={(val) => setSelectedOfferId(val ?? "")}>
+            <label className="block text-xs font-semibold text-[#374151] mb-1.5 font-bold uppercase tracking-[0.12em] text-slate-500">
+              Your Offer
+            </label>
+            <Select value={selectedOfferId} onValueChange={val => setSelectedOfferId(val ?? "")}>
               <SelectTrigger className="w-full h-[41px] border border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1d67dd] shadow-none data-[size=default]:h-[41px]">
                 <SelectValue placeholder="Select your offer…" className="text-[#0F172A] opacity-100" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-slate-200 shadow-lg">
                 {activeOffers.map(o => (
-                  <SelectItem key={String(o.id)} value={String(o.id)} className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5">
+                  <SelectItem
+                    key={String(o.id)}
+                    value={String(o.id)}
+                    className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5"
+                  >
                     #{String(o.id)} — {fmtEth(o.availableFunds)} available
                   </SelectItem>
                 ))}
@@ -256,24 +327,28 @@ export const LenderPanel = ({ marketplace }: Props) => {
           </div>
         </div>
 
-        {checkedPair && selectedLoanId === String(checkedPair.loanId) && selectedOfferId === String(checkedPair.offerId) && (
-          <div className={`mb-5 flex items-center gap-3 rounded-xl p-3.5 border text-sm font-medium ${
-            matchIsCompatible === true
-              ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
-              : matchIsCompatible === false
-              ? "bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]"
-              : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]"
-          }`}>
-            <span className="text-lg">
-              {matchIsCompatible === true ? "✓" : matchIsCompatible === false ? "✗" : "🔐"}
-            </span>
-            {matchIsCompatible === true
-              ? "Match confirmed — you can fund this loan."
-              : matchIsCompatible === false
-              ? "Not compatible — borrower doesn't meet your criteria."
-              : "Match result encrypted. Click Decrypt to reveal."}
-          </div>
-        )}
+        {checkedPair &&
+          selectedLoanId === String(checkedPair.loanId) &&
+          selectedOfferId === String(checkedPair.offerId) && (
+            <div
+              className={`mb-5 flex items-center gap-3 rounded-xl p-3.5 border text-sm font-medium ${
+                matchIsCompatible === true
+                  ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
+                  : matchIsCompatible === false
+                    ? "bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]"
+                    : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]"
+              }`}
+            >
+              <span className="text-lg">
+                {matchIsCompatible === true ? "✓" : matchIsCompatible === false ? "✗" : "🔐"}
+              </span>
+              {matchIsCompatible === true
+                ? "Match confirmed — you can fund this loan."
+                : matchIsCompatible === false
+                  ? "Not compatible — borrower doesn't meet your criteria."
+                  : "Match result encrypted. Click Decrypt to reveal."}
+            </div>
+          )}
 
         <div className="flex flex-wrap gap-3">
           <button

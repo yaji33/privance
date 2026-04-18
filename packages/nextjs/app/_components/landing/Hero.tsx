@@ -10,36 +10,45 @@ const fadeUp = (delay = 0) => ({
 });
 
 const meterHeights = [
-  "h-[28%]", "h-[36%]", "h-[44%]", "h-[52%]", "h-[58%]", "h-[65%]",
-  "h-[72%]", "h-[80%]", "h-[62%]", "h-[74%]", "h-[68%]", "h-[84%]",
-  "h-[46%]", "h-[54%]", "h-[40%]", "h-[60%]", "h-[50%]", "h-[42%]",
-  "h-[64%]", "h-[57%]", "h-[48%]", "h-[38%]", "h-[66%]", "h-[52%]",
+  "h-[28%]",
+  "h-[36%]",
+  "h-[44%]",
+  "h-[52%]",
+  "h-[58%]",
+  "h-[65%]",
+  "h-[72%]",
+  "h-[80%]",
+  "h-[62%]",
+  "h-[74%]",
+  "h-[68%]",
+  "h-[84%]",
+  "h-[46%]",
+  "h-[54%]",
+  "h-[40%]",
+  "h-[60%]",
+  "h-[50%]",
+  "h-[42%]",
+  "h-[64%]",
+  "h-[57%]",
+  "h-[48%]",
+  "h-[38%]",
+  "h-[66%]",
+  "h-[52%]",
 ];
 
 const LockIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="11"
+    height="11"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-
-const ClockIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
@@ -130,11 +139,12 @@ export const Hero = () => {
                   $44,128.94
                 </h2>
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-blue-200/60">
-                  <span className="opacity-55"><LockIcon /></span>
+                  <span className="opacity-55">
+                    <LockIcon />
+                  </span>
                   <span>FHE-encrypted</span>
                 </div>
               </div>
-
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-3">
@@ -142,7 +152,7 @@ export const Hero = () => {
                 { label: "Active", value: "$5,148", sub: "↑ 3 loans", subColor: "text-white" },
                 { label: "Pending", value: "$2,340", sub: "Matching…", subColor: "text-white" },
                 { label: "Yield (30d)", value: "8.4%", sub: "+$362 earned", subColor: "text-white" },
-              ].map((s) => (
+              ].map(s => (
                 <div key={s.label} className="rounded-2xl border border-white/12 bg-white/9 px-4 py-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-100/55">{s.label}</p>
                   <p className="mt-1.5 text-[20px] font-bold text-white leading-none">{s.value}</p>
@@ -153,7 +163,6 @@ export const Hero = () => {
 
             <div className="my-6 h-px bg-white/10" />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-100/60">Utilization</p>
@@ -186,7 +195,7 @@ export const Hero = () => {
                   Recent Activity
                 </p>
                 <div className="flex flex-col gap-2">
-                  {activityItems.map((item) => (
+                  {activityItems.map(item => (
                     <div
                       key={item.type}
                       className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/7 px-3 py-2.5"
@@ -195,9 +204,7 @@ export const Hero = () => {
                         <p className="text-[11px] font-semibold text-white">{item.type}</p>
                         <p className="truncate text-[10px] text-blue-100/50">{item.meta}</p>
                       </div>
-                      <p className={`flex-shrink-0 text-[12px] font-bold ${item.amountColor}`}>
-                        {item.amount}
-                      </p>
+                      <p className={`flex-shrink-0 text-[12px] font-bold ${item.amountColor}`}>{item.amount}</p>
                     </div>
                   ))}
                 </div>
@@ -209,7 +216,6 @@ export const Hero = () => {
             </button>
           </motion.div>
         </motion.div>
-
       </div>
     </motion.section>
   );

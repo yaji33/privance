@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDeployedContractInfo } from "../helper";
 import { useWagmiEthers } from "../wagmi/useWagmiEthers";
 import { FhevmInstance } from "@fhevm-sdk";
@@ -11,10 +11,11 @@ import {
   useFHEEncryption,
   useInMemoryStorage,
 } from "@fhevm-sdk";
+import type { AbiFunction } from "abitype";
 import { ethers } from "ethers";
+import { useReadContract } from "wagmi";
 import type { Contract } from "~~/utils/helper/contract";
 import type { AllowedChainIds } from "~~/utils/helper/networks";
-import { useReadContract } from "wagmi";
 
 /**
  * useFHECounterWagmi - Minimal FHE Counter hook for Wagmi devs
@@ -60,18 +61,12 @@ export const useFHECounterWagmi = (parameters: {
     if (!hasContract) return undefined;
     const providerOrSigner = mode === "read" ? ethersReadonlyProvider : ethersSigner;
     if (!providerOrSigner) return undefined;
-    return new ethers.Contract(
-      fheCounter!.address,
-      (fheCounter as FHECounterInfo).abi,
-      providerOrSigner,
-    );
+    return new ethers.Contract(fheCounter!.address, (fheCounter as FHECounterInfo).abi as any, providerOrSigner);
   };
 
   // Read count handle via wagmi
   const readResult = useReadContract({
-    address: (hasContract ? (fheCounter!.address as unknown as `0x${string}`) : undefined) as
-      | `0x${string}`
-      | undefined,
+    address: (hasContract ? (fheCounter!.address as unknown as `0x${string}`) : undefined) as `0x${string}` | undefined,
     abi: (hasContract ? ((fheCounter as FHECounterInfo).abi as any) : undefined) as any,
     functionName: "getCount" as const,
     query: {
@@ -128,19 +123,27 @@ export const useFHECounterWagmi = (parameters: {
   const decryptCountHandle = decrypt;
 
   // Mutations (increment/decrement)
-  const { encryptWith } = useFHEEncryption({ instance, ethersSigner: ethersSigner as any, contractAddress: fheCounter?.address });
+  const { encryptWith } = useFHEEncryption({
+    instance,
+    ethersSigner: ethersSigner as any,
+    contractAddress: fheCounter?.address,
+  });
   const canUpdateCounter = useMemo(
     () => Boolean(hasContract && instance && hasSigner && !isProcessing),
     [hasContract, instance, hasSigner, isProcessing],
   );
 
   const getEncryptionMethodFor = (functionName: "increment" | "decrement") => {
-    const functionAbi = fheCounter?.abi.find(item => item.type === "function" && item.name === functionName);
-    if (!functionAbi) return { method: undefined as string | undefined, error: `Function ABI not found for ${functionName}` } as const;
-    if (!functionAbi.inputs || functionAbi.inputs.length === 0)
+    const functionAbi = fheCounter?.abi.find(
+      (item): item is AbiFunction => item.type === "function" && item.name === functionName,
+    );
+    if (!functionAbi)
+      return { method: undefined as string | undefined, error: `Function ABI not found for ${functionName}` } as const;
+    if (functionAbi.inputs.length === 0)
       return { method: undefined as string | undefined, error: `No inputs found for ${functionName}` } as const;
     const firstInput = functionAbi.inputs[0]!;
-    return { method: getEncryptionMethod(firstInput.internalType), error: undefined } as const;
+    const inputType = firstInput.internalType ?? firstInput.type;
+    return { method: getEncryptionMethod(inputType), error: undefined } as const;
   };
 
   const updateCounter = useCallback(

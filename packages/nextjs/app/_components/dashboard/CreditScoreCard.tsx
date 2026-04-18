@@ -44,9 +44,7 @@ export const CreditScoreCard = ({ marketplace }: Props) => {
     <div className="rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] p-6">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">
-            Credit
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">Credit</p>
           <h3 className="font-bold text-[#0F172A] text-[15px]">Credit Score</h3>
           <p className="text-[12px] text-slate-400 mt-0.5">Encrypted on-chain via FHE</p>
         </div>
@@ -70,9 +68,7 @@ export const CreditScoreCard = ({ marketplace }: Props) => {
             <div className="mb-1.5">
               <span className="text-slate-400 text-[13px]">/ 850</span>
               {grade && (
-                <p className={`text-[11px] font-bold uppercase tracking-wider mt-0.5 ${grade.color}`}>
-                  {grade.label}
-                </p>
+                <p className={`text-[11px] font-bold uppercase tracking-wider mt-0.5 ${grade.color}`}>{grade.label}</p>
               )}
             </div>
           </div>

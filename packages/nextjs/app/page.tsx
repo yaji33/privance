@@ -2,11 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
 import { Hero } from "./_components/landing/Hero";
-import { HowItWorks } from "./_components/landing/HowItWorks";
-import { TheProblem } from "./_components/landing/TheProblem";
 import { ThePrivanceSolution } from "./_components/landing/ThePrivanceSolution";
+import { TheProblem } from "./_components/landing/TheProblem";
+import { useAccount } from "wagmi";
 
 export default function Home() {
   const { isConnected } = useAccount();

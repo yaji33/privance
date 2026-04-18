@@ -161,11 +161,7 @@ const LoanLifecycle = () => {
 
   return (
     <div ref={wrapRef} className="relative w-full py-8">
-      <svg
-        ref={svgRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 0 }}
-      />
+      <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
 
       {phases.map((phase, i) => {
         const isRight = i % 2 === 1;
@@ -177,7 +173,9 @@ const LoanLifecycle = () => {
             style={{ zIndex: 1 }}
           >
             <div
-              ref={(el) => { cardRefs.current[i] = el; }}
+              ref={el => {
+                cardRefs.current[i] = el;
+              }}
               className="w-[420px] bg-white/60 backdrop-blur-sm border border-white/70 rounded-[20px] p-6 cursor-pointer
                         transition-all duration-200 hover:-translate-y-1 hover:border-slate-300
                         shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)]"
@@ -188,29 +186,17 @@ const LoanLifecycle = () => {
                     phase.accent ? "bg-[#e9f3ff]" : "bg-slate-100"
                   }`}
                 >
-                  <Image
-                    src={phase.src}
-                    alt={phase.title}
-                    width={60}
-                    height={60}
-                    className="object-contain"
-                  />
+                  <Image src={phase.src} alt={phase.title} width={60} height={60} className="object-contain" />
                 </div>
 
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="text-[12px] font-semibold flex-shrink-0 text-slate-900"
-                    >
-                      {phase.num}
-                    </span>
+                    <span className="text-[12px] font-semibold flex-shrink-0 text-slate-900">{phase.num}</span>
                     <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                       {phase.actor}
                     </span>
                   </div>
-                  <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
-                    {phase.title}
-                  </h3>
+                  <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">{phase.title}</h3>
                 </div>
               </div>
 
@@ -238,24 +224,21 @@ export const ThePrivanceSolution = () => {
 
       <section id="the-solution" className="relative pt-24 pb-8 sm:pt-32 sm:pb-12">
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
-
           <div className="grid lg:grid-cols-[1.3fr_1fr] gap-12 items-end mb-16">
             <motion.div {...fadeUp(0)}>
               <p className="text-[#1d67dd] font-bold uppercase tracking-[0.22em] text-[11px] mb-5">
                 The Privance Solution
               </p>
               <h2 className="text-[2.6rem] sm:text-[3.5rem] font-bold leading-[1.06] tracking-tight text-slate-900">
-                Encrypted on both sides.{" "}
-                <span className="text-[#1d67dd]">Trustless in the middle.</span>
+                Encrypted on both sides. <span className="text-[#1d67dd]">Trustless in the middle.</span>
               </h2>
             </motion.div>
 
             <motion.div {...fadeUp(0.12)} className="lg:pb-2">
               <p className="text-slate-500 text-lg leading-relaxed">
-                Privance uses Zama&apos;s FHEVM to perform credit checks and
-                loan matching entirely in the encrypted domain. Scores and
-                thresholds are ciphertext in storage — compared without ever
-                being decrypted on-chain.
+                Privance uses Zama&apos;s FHEVM to perform credit checks and loan matching entirely in the encrypted
+                domain. Scores and thresholds are ciphertext in storage — compared without ever being decrypted
+                on-chain.
               </p>
             </motion.div>
           </div>
@@ -264,7 +247,6 @@ export const ThePrivanceSolution = () => {
             Loan lifecycle
           </motion.p>
           <LoanLifecycle />
-
         </div>
       </section>
 
@@ -273,24 +255,30 @@ export const ThePrivanceSolution = () => {
 
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8">
           <div className="grid lg:grid-cols-[260px_1fr] gap-16">
-
             <motion.div {...fadeUp(0)} className="lg:sticky lg:top-32 self-start">
-              <p className="text-[#1d67dd] font-bold uppercase tracking-[0.22em] text-[11px] mb-5">
-                Features
-              </p>
+              <p className="text-[#1d67dd] font-bold uppercase tracking-[0.22em] text-[11px] mb-5">Features</p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-[1.1] mb-6">
                 Built for real capital. Not demos.
               </h2>
               <p className="text-slate-500 text-sm leading-relaxed mb-8">
-                Every design decision optimises for security, capital efficiency, and
-                on-chain verifiability — not for marketing slides.
+                Every design decision optimises for security, capital efficiency, and on-chain verifiability — not for
+                marketing slides.
               </p>
               <Link
                 href="/dashboard"
                 className="inline-flex h-11 items-center gap-2 rounded-full bg-[#1d67dd] px-6 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue-500 active:scale-[0.97]"
               >
                 Open Dashboard
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </Link>
@@ -304,34 +292,24 @@ export const ThePrivanceSolution = () => {
                   whileHover={{ y: -4 }}
                   className="group rounded-3xl border border-white/70 bg-white/40 backdrop-blur-sm p-7 shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] transition-all"
                 >
-                <div className="flex items-center gap-4 mb-5">
-                  <div
-                    className={`w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-[#e9f3ff]`}
-                  >
-                    <Image
-                      src={f.src}
-                      alt={f.title}
-                      width={60}
-                      height={60}
-                      className="object-contain"
-                    />
-                  </div>
+                  <div className="flex items-center gap-4 mb-5">
+                    <div
+                      className={`w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-[#e9f3ff]`}
+                    >
+                      <Image src={f.src} alt={f.title} width={60} height={60} className="object-contain" />
+                    </div>
 
-                  <div className="flex flex-col">
-                    <span className="text-[2rem] font-bold text-slate-900 leading-none tracking-tight">
-                      {f.stat}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1d67dd] leading-tight mt-1">
-                      {f.statLabel}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-[2rem] font-bold text-slate-900 leading-none tracking-tight">{f.stat}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#1d67dd] leading-tight mt-1">
+                        {f.statLabel}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
                   <div className="w-8 h-px bg-[#1d67dd]/30 mb-5 group-hover:w-12 transition-all duration-300" />
 
-                  <h3 className="text-base font-bold text-slate-900 mb-3 leading-snug">
-                    {f.title}
-                  </h3>
+                  <h3 className="text-base font-bold text-slate-900 mb-3 leading-snug">{f.title}</h3>
                   <p className="text-slate-500 text-sm leading-relaxed">{f.body}</p>
                 </motion.div>
               ))}
@@ -352,14 +330,23 @@ export const ThePrivanceSolution = () => {
           <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-sky-200/20 blur-[100px] rounded-full" />
 
           <div className="relative z-10 max-w-3xl mx-auto">
-            <motion.p {...fadeUp(0.1)} className="text-blue-50/70 text-[11px] font-bold tracking-[0.4em] uppercase mb-8">
+            <motion.p
+              {...fadeUp(0.1)}
+              className="text-blue-50/70 text-[11px] font-bold tracking-[0.4em] uppercase mb-8"
+            >
               Ready to begin?
             </motion.p>
-            <motion.h2 {...fadeUp(0.2)} className="text-5xl sm:text-7xl font-bold text-white mb-6 tracking-tight leading-[0.95]">
+            <motion.h2
+              {...fadeUp(0.2)}
+              className="text-5xl sm:text-7xl font-bold text-white mb-6 tracking-tight leading-[0.95]"
+            >
               Your finances. <br />
               <span className="text-blue-50/60">Your terms.</span>
             </motion.h2>
-            <motion.p {...fadeUp(0.3)} className="text-white/80 text-lg mb-12 max-w-md mx-auto leading-relaxed font-medium">
+            <motion.p
+              {...fadeUp(0.3)}
+              className="text-white/80 text-lg mb-12 max-w-md mx-auto leading-relaxed font-medium"
+            >
               Start today and see how easy private, on-chain lending can be with Privance.
             </motion.p>
             <motion.div {...fadeUp(0.4)} className="flex justify-center">

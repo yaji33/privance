@@ -1,17 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { BorrowerPanel } from "../_components/dashboard/BorrowerPanel";
-import { LenderPanel }   from "../_components/dashboard/LenderPanel";
+import { LenderPanel } from "../_components/dashboard/LenderPanel";
 import { RepaymentPanel } from "../_components/dashboard/RepaymentPanel";
 import { useFhevm } from "@fhevm-sdk";
-import { RainbowKitCustomConnectButton } from "~~/components/helper/RainbowKitCustomConnectButton";
-import { useCollateral }       from "~~/hooks/privance/useCollateral";
-import { useMarketplace }      from "~~/hooks/privance/useMarketplace";
-import { useRepaymentTracker } from "~~/hooks/privance/useRepaymentTracker";
 import { useAccount, useWalletClient } from "wagmi";
 import { DEFAULT_TAB, type Tab } from "~~/components/Header";
+import { RainbowKitCustomConnectButton } from "~~/components/helper/RainbowKitCustomConnectButton";
+import { useCollateral } from "~~/hooks/privance/useCollateral";
+import { useMarketplace } from "~~/hooks/privance/useMarketplace";
+import { useRepaymentTracker } from "~~/hooks/privance/useRepaymentTracker";
 
 const MOCK_CHAINS = { 31337: "http://localhost:8545" } as const;
 
@@ -19,7 +19,6 @@ export default function DashboardPage() {
   const { isConnected, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
   const searchParams = useSearchParams();
-  const router       = useRouter();
 
   const activeTab = (searchParams.get("tab") as Tab) ?? DEFAULT_TAB;
 
@@ -32,7 +31,11 @@ export default function DashboardPage() {
     };
   }, [walletClient]);
 
-  const { instance, status: fhevmStatus, error: fhevmError } = useFhevm({
+  const {
+    instance,
+    status: fhevmStatus,
+    error: fhevmError,
+  } = useFhevm({
     provider,
     chainId: chain?.id,
     initialMockChains: MOCK_CHAINS,
@@ -55,8 +58,8 @@ export default function DashboardPage() {
   }, [fhevmError]);
 
   const marketplace = useMarketplace({ instance, fhevmStatus, fhevmError });
-  const collateral  = useCollateral();
-  const repayment   = useRepaymentTracker();
+  const collateral = useCollateral();
+  const repayment = useRepaymentTracker();
 
   if (!isConnected) {
     return (
@@ -67,7 +70,9 @@ export default function DashboardPage() {
               <rect x="5" y="14" width="20" height="15" rx="3" stroke="#1741D9" strokeWidth="1.8" />
               <path
                 d="M9 14V10.5C9 7.46 11.69 5 15 5s6 2.46 6 5.5V14"
-                stroke="#1741D9" strokeWidth="1.8" strokeLinecap="round"
+                stroke="#1741D9"
+                strokeWidth="1.8"
+                strokeLinecap="round"
               />
             </svg>
           </div>

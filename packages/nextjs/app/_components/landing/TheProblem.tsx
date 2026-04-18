@@ -70,18 +70,18 @@ const options = [
     tagLabel: "Fully public",
     risks: [
       { src: "/wallet-exposed.png", label: "Wallet exposed" },
-      { src: "/mev-bot.png",        label: "MEV bots watching" },
-      { src: "/credit-score.png",   label: "Credit score public" },
-      { src: "/counterparty.png",   label: "Counterparty visible" },
+      { src: "/mev-bot.png", label: "MEV bots watching" },
+      { src: "/credit-score.png", label: "Credit score public" },
+      { src: "/counterparty.png", label: "Counterparty visible" },
     ],
   },
   {
     label: "Centralized off-chain",
     tagLabel: "Single point of failure",
     risks: [
-      { src: "/bank.png",   label: "Bank holds your data" },
+      { src: "/bank.png", label: "Bank holds your data" },
       { src: "/censor.png", label: "Can censor anytime" },
-      { src: "/rules.png",  label: "Rules set by middleman" },
+      { src: "/rules.png", label: "Rules set by middleman" },
       { src: "/freeze.png", label: "Can freeze position" },
     ],
   },
@@ -89,19 +89,13 @@ const options = [
 
 export const TheProblem = () => {
   return (
-    <section
-      id="the-problem"
-      className="relative overflow-hidden bg-[#e9f3ff] pt-28 pb-20 sm:pt-36 sm:pb-28"
-    >
+    <section id="the-problem" className="relative overflow-hidden bg-[#e9f3ff] pt-28 pb-20 sm:pt-36 sm:pb-28">
       <div className="absolute inset-0 opacity-[0.18] bg-[linear-gradient(rgba(29,103,221,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(29,103,221,0.12)_1px,transparent_1px)] [background-size:52px_52px]" />
       <div className="absolute right-[-8%] top-1/3 w-[520px] h-[520px] bg-[radial-gradient(circle,rgba(220,38,38,0.05)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-6 sm:px-8">
-
         <motion.div {...fadeUp(0)} className="max-w-2xl mb-20">
-          <p className="text-[#1d67dd] font-bold uppercase tracking-[0.22em] text-[11px] mb-5">
-            The Problem
-          </p>
+          <p className="text-[#1d67dd] font-bold uppercase tracking-[0.22em] text-[11px] mb-5">The Problem</p>
           <h2 className="text-[2.6rem] sm:text-[3.5rem] font-bold leading-[1.06] tracking-tight text-slate-900">
             On-chain lending has no{" "}
             <span className="relative inline-block">
@@ -110,13 +104,12 @@ export const TheProblem = () => {
             </span>
           </h2>
           <p className="mt-5 text-slate-500 text-lg leading-relaxed max-w-xl">
-            You either expose everything to a public ledger, or hand your data
-            to a middleman. Neither option is acceptable for serious capital.
+            You either expose everything to a public ledger, or hand your data to a middleman. Neither option is
+            acceptable for serious capital.
           </p>
         </motion.div>
 
         <div className="grid lg:grid-cols-[1.15fr_1fr] gap-8 items-start">
-
           <motion.div {...fadeUp(0.1)}>
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">
               What anyone can see, right now
@@ -132,8 +125,12 @@ export const TheProblem = () => {
                   <span className="font-mono text-[11px] text-slate-400 ml-2">etherscan.io/txs</span>
                 </div>
                 <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                  <span>ETH <span className="text-slate-600 font-medium">$2,358.65</span></span>
-                  <span>Gas <span className="text-[#1d67dd] font-medium">0.047 Gwei</span></span>
+                  <span>
+                    ETH <span className="text-slate-600 font-medium">$2,358.65</span>
+                  </span>
+                  <span>
+                    Gas <span className="text-[#1d67dd] font-medium">0.047 Gwei</span>
+                  </span>
                 </div>
               </div>
               <div className="bg-white border-b border-slate-100 px-4 py-2.5 flex items-center gap-4">
@@ -142,8 +139,10 @@ export const TheProblem = () => {
                   <span className="font-bold text-[13px] text-slate-700">Etherscan</span>
                 </div>
                 <div className="flex gap-3 ml-2 text-[11px] text-slate-400">
-                  {["Home", "Blockchain", "Tokens", "More"].map((n) => (
-                    <span key={n} className={n === "Blockchain" ? "text-[#1d67dd]" : ""}>{n}</span>
+                  {["Home", "Blockchain", "Tokens", "More"].map(n => (
+                    <span key={n} className={n === "Blockchain" ? "text-[#1d67dd]" : ""}>
+                      {n}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -155,8 +154,10 @@ export const TheProblem = () => {
                 <table className="w-full text-[11px]">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
-                      {["Txn Hash", "Method", "Block", "Age", "From", "To", "Amount", "Txn Fee"].map((h) => (
-                        <th key={h} className="text-left px-3 py-2.5 font-semibold text-slate-500 whitespace-nowrap">{h}</th>
+                      {["Txn Hash", "Method", "Block", "Age", "From", "To", "Amount", "Txn Fee"].map(h => (
+                        <th key={h} className="text-left px-3 py-2.5 font-semibold text-slate-500 whitespace-nowrap">
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -189,7 +190,8 @@ export const TheProblem = () => {
               </div>
               <div className="bg-slate-50 border-t border-slate-100 px-4 py-3">
                 <p className="text-[11px] text-slate-400">
-                  Every transaction — your wallet, loan amount, credit score inputs, counterparty — is indexed and publicly queryable.
+                  Every transaction — your wallet, loan amount, credit score inputs, counterparty — is indexed and
+                  publicly queryable.
                 </p>
               </div>
             </div>
@@ -216,23 +218,12 @@ export const TheProblem = () => {
                 <div className="mx-5 h-px bg-[#1d67dd]/[0.08]" />
 
                 <div className="grid grid-cols-2 gap-2.5 px-5 py-4">
-                  {opt.risks.map((risk) => (
-                    <div
-                      key={risk.label}
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/60"
-                    >
+                  {opt.risks.map(risk => (
+                    <div key={risk.label} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/60">
                       <div className="w-8 h-8 rounded-lg bg-[#1d67dd]/[0.06] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        <Image
-                          src={risk.src}
-                          alt={risk.label}
-                          width={24}
-                          height={24}
-                          className="object-contain"
-                        />
+                        <Image src={risk.src} alt={risk.label} width={24} height={24} className="object-contain" />
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-700 leading-tight">
-                        {risk.label}
-                      </span>
+                      <span className="text-[11px] font-semibold text-slate-700 leading-tight">{risk.label}</span>
                     </div>
                   ))}
                 </div>
@@ -245,15 +236,11 @@ export const TheProblem = () => {
             >
               <div className="w-[3px] self-stretch rounded-full bg-[#1d67dd]/30 flex-shrink-0" />
               <p className="text-slate-500 text-[12.5px] leading-relaxed">
-                Institutional capital stays off-chain. Retail borrowers
-                accept surveillance or forgo access entirely.{" "}
-                <span className="text-slate-700 font-semibold">
-                  Permissionless finance — broken before it begins.
-                </span>
+                Institutional capital stays off-chain. Retail borrowers accept surveillance or forgo access entirely.{" "}
+                <span className="text-slate-700 font-semibold">Permissionless finance — broken before it begins.</span>
               </p>
             </motion.div>
           </div>
-
         </div>
       </div>
     </section>

@@ -123,17 +123,19 @@ export const useMarketplace = ({
     return rawLoanData.flatMap((item, i) => {
       if (item.status !== "success" || !item.result) return [];
       const r = item.result as any;
-      return [{
-        id: BigInt(i),
-        borrower: r.borrower ?? r[0],
-        requestedAmount: r.requestedAmount ?? r[1],
-        plainRequestedAmount: r.plainRequestedAmount ?? r[2],
-        plainDuration: r.plainDuration ?? r[3],
-        timestamp: r.timestamp ?? r[4],
-        isActive: r.isActive ?? r[5],
-        isFunded: r.isFunded ?? r[6],
-        lender: r.lender ?? r[7],
-      } as LoanRequest];
+      return [
+        {
+          id: BigInt(i),
+          borrower: r.borrower ?? r[0],
+          requestedAmount: r.requestedAmount ?? r[1],
+          plainRequestedAmount: r.plainRequestedAmount ?? r[2],
+          plainDuration: r.plainDuration ?? r[3],
+          timestamp: r.timestamp ?? r[4],
+          isActive: r.isActive ?? r[5],
+          isFunded: r.isFunded ?? r[6],
+          lender: r.lender ?? r[7],
+        } as LoanRequest,
+      ];
     });
   }, [rawLoanData]);
 
@@ -158,17 +160,19 @@ export const useMarketplace = ({
     return rawOfferData.flatMap((item, i) => {
       if (item.status !== "success" || !item.result) return [];
       const r = item.result as any;
-      return [{
-        id: BigInt(i),
-        lender: r.lender ?? r[0],
-        minCreditScore: r.minCreditScore ?? r[1],
-        maxLoanAmount: r.maxLoanAmount ?? r[2],
-        availableFunds: r.availableFunds ?? r[3],
-        isActive: r.isActive ?? r[4],
-        collateralPercentage: r.collateralPercentage ?? r[5],
-        plainInterestRate: r.plainInterestRate ?? r[6],
-        plainMaxLoanAmount: r.plainMaxLoanAmount ?? r[7],
-      } as LenderOffer];
+      return [
+        {
+          id: BigInt(i),
+          lender: r.lender ?? r[0],
+          minCreditScore: r.minCreditScore ?? r[1],
+          maxLoanAmount: r.maxLoanAmount ?? r[2],
+          availableFunds: r.availableFunds ?? r[3],
+          isActive: r.isActive ?? r[4],
+          collateralPercentage: r.collateralPercentage ?? r[5],
+          plainInterestRate: r.plainInterestRate ?? r[6],
+          plainMaxLoanAmount: r.plainMaxLoanAmount ?? r[7],
+        } as LenderOffer,
+      ];
     });
   }, [rawOfferData]);
 
@@ -178,20 +182,28 @@ export const useMarketplace = ({
     contractAddress: marketplace?.address,
   });
 
-  const effectiveScoreHandle = scoreHandle ?? (onChainScoreHandle && onChainScoreHandle !== ethers.ZeroHash ? (onChainScoreHandle as string) : undefined);
+  const effectiveScoreHandle =
+    scoreHandle ??
+    (onChainScoreHandle && onChainScoreHandle !== ethers.ZeroHash ? (onChainScoreHandle as string) : undefined);
 
   const allDecryptRequests = useMemo(() => {
     if (!hasContract || !marketplace?.address) return undefined;
     const reqs: Array<{ handle: string; contractAddress: string }> = [];
-    const sh = scoreHandle ?? (onChainScoreHandle && onChainScoreHandle !== ethers.ZeroHash ? (onChainScoreHandle as string) : undefined);
-    if (sh && sh !== ethers.ZeroHash)
-      reqs.push({ handle: sh, contractAddress: marketplace.address });
+    const sh =
+      scoreHandle ??
+      (onChainScoreHandle && onChainScoreHandle !== ethers.ZeroHash ? (onChainScoreHandle as string) : undefined);
+    if (sh && sh !== ethers.ZeroHash) reqs.push({ handle: sh, contractAddress: marketplace.address });
     if (matchHandle && matchHandle !== ethers.ZeroHash)
       reqs.push({ handle: matchHandle, contractAddress: marketplace.address });
     return reqs.length > 0 ? (reqs as any) : undefined;
   }, [hasContract, scoreHandle, onChainScoreHandle, matchHandle, marketplace?.address]);
 
-  const { canDecrypt, decrypt, isDecrypting, results: decryptResults } = useFHEDecrypt({
+  const {
+    canDecrypt,
+    decrypt,
+    isDecrypting,
+    results: decryptResults,
+  } = useFHEDecrypt({
     instance,
     ethersSigner: ethersSigner as any,
     fhevmDecryptionSignatureStorage: fhevmStorage,
@@ -231,10 +243,16 @@ export const useMarketplace = ({
   const createLoanRequest = useCallback(
     async (plainAmountEth: string, durationDays: number) => {
       if (isProcessing) return;
-      if (!instance) { toast.error("FHE instance not ready — please wait a moment and try again."); return; }
+      if (!instance) {
+        toast.error("FHE instance not ready — please wait a moment and try again.");
+        return;
+      }
       const plainAmountWei = ethers.parseEther(plainAmountEth);
       const contract = getContract();
-      if (!contract) { toast.error("Wallet not connected or contract unavailable."); return; }
+      if (!contract) {
+        toast.error("Wallet not connected or contract unavailable.");
+        return;
+      }
       setIsProcessing(true);
       const tid = toast.loading("Encrypting loan amount with FHE...");
       try {
@@ -244,7 +262,12 @@ export const useMarketplace = ({
         });
         if (!enc) throw new Error("FHE encryption failed");
         toast.loading("Submitting loan request...", { id: tid });
-        const tx = await contract.createLoanRequest(enc.handles[0], enc.inputProof, plainAmountWei, BigInt(durationDays) * 86400n);
+        const tx = await contract.createLoanRequest(
+          enc.handles[0],
+          enc.inputProof,
+          plainAmountWei,
+          BigInt(durationDays) * 86400n,
+        );
         await tx.wait();
         await new Promise(r => setTimeout(r, 1000));
         await refetchLoanId();
@@ -279,13 +302,25 @@ export const useMarketplace = ({
   );
 
   const createLenderOffer = useCallback(
-    async (minScore: number, maxAmountEth: string, collateralPct: number, interestRateBps: number, depositEth: string) => {
+    async (
+      minScore: number,
+      maxAmountEth: string,
+      collateralPct: number,
+      interestRateBps: number,
+      depositEth: string,
+    ) => {
       if (isProcessing) return;
-      if (!instance) { toast.error("FHE instance not ready — please wait a moment and try again."); return; }
+      if (!instance) {
+        toast.error("FHE instance not ready — please wait a moment and try again.");
+        return;
+      }
       const maxAmountWei = ethers.parseEther(maxAmountEth);
       const depositWei = ethers.parseEther(depositEth);
       const contract = getContract();
-      if (!contract) { toast.error("Wallet not connected or contract unavailable."); return; }
+      if (!contract) {
+        toast.error("Wallet not connected or contract unavailable.");
+        return;
+      }
       setIsProcessing(true);
       const tid = toast.loading("Encrypting offer parameters with FHE...");
       try {
@@ -297,8 +332,13 @@ export const useMarketplace = ({
         if (!enc) throw new Error("FHE encryption failed");
         toast.loading("Submitting lender offer...", { id: tid });
         const tx = await contract.createLenderOffer(
-          enc.handles[0], enc.inputProof, enc.handles[1], enc.inputProof,
-          BigInt(collateralPct), BigInt(interestRateBps), maxAmountWei,
+          enc.handles[0],
+          enc.inputProof,
+          enc.handles[1],
+          enc.inputProof,
+          BigInt(collateralPct),
+          BigInt(interestRateBps),
+          maxAmountWei,
           { value: depositWei },
         );
         await tx.wait();
@@ -373,8 +413,8 @@ export const useMarketplace = ({
         const msg = reason
           ? reason
           : e?.code === "CALL_EXCEPTION"
-          ? "Fund loan failed. Most likely the borrower has insufficient collateral deposited. They must deposit at least (loan amount × collateral %) in the Collateral Vault first."
-          : (e?.shortMessage ?? e?.message ?? "Failed to fund loan");
+            ? "Fund loan failed. Most likely the borrower has insufficient collateral deposited. They must deposit at least (loan amount × collateral %) in the Collateral Vault first."
+            : (e?.shortMessage ?? e?.message ?? "Failed to fund loan");
         toast.error(msg, { id: tid });
       } finally {
         setIsProcessing(false);
@@ -383,7 +423,10 @@ export const useMarketplace = ({
     [getContract, isProcessing, refetchLoans, refetchOffers],
   );
 
-  const isInstanceReady = fhevmStatus === "ready" ? Boolean(instance && ethersSigner) : Boolean(instance && ethersSigner && fhevmStatus !== "error");
+  const isInstanceReady =
+    fhevmStatus === "ready"
+      ? Boolean(instance && ethersSigner)
+      : Boolean(instance && ethersSigner && fhevmStatus !== "error");
   const isFhevmError = fhevmStatus === "error";
 
   return {

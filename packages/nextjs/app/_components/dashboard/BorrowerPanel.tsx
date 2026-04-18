@@ -1,19 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
-import { ethers } from "ethers";
 import { CollateralCard } from "./CollateralCard";
 import { CreditScoreCard } from "./CreditScoreCard";
+import { ethers } from "ethers";
+import { useAccount } from "wagmi";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~~/components/ui/select";
 import { useCollateral } from "~~/hooks/privance/useCollateral";
 import { useMarketplace } from "~~/hooks/privance/useMarketplace";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~~/components/ui/select";
 
 const fmtEth = (wei: bigint | undefined) =>
   wei !== undefined ? `${parseFloat(ethers.formatEther(wei)).toFixed(4)} ETH` : "—";
@@ -91,9 +85,7 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
       <div className="rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] overflow-hidden">
         <div className="px-6 pt-5 pb-4 flex items-start justify-between border-b border-slate-50">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">
-              My Loan Requests
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">My Loan Requests</p>
             <h3 className="font-bold text-[#0F172A] text-[15px]">All requests from this wallet</h3>
           </div>
           <span className="text-[11px] font-semibold text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full shrink-0 mt-0.5">
@@ -123,19 +115,12 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {myLoans.map(loan => (
-                    <tr
-                      key={String(loan.id)}
-                      className="hover:bg-[#F8FAFF] transition-colors"
-                    >
-                      <td className="py-3 px-1 font-mono text-[11px] text-slate-400">
-                        #{String(loan.id)}
-                      </td>
+                    <tr key={String(loan.id)} className="hover:bg-[#F8FAFF] transition-colors">
+                      <td className="py-3 px-1 font-mono text-[11px] text-slate-400">#{String(loan.id)}</td>
                       <td className="py-3 px-1 font-semibold text-[13px] text-[#0F172A]">
                         {fmtEth(loan.plainRequestedAmount)}
                       </td>
-                      <td className="py-3 px-1 text-[13px] text-slate-500">
-                        {fmtDays(loan.plainDuration)}
-                      </td>
+                      <td className="py-3 px-1 text-[13px] text-slate-500">{fmtDays(loan.plainDuration)}</td>
                       <td className="py-3 px-1 text-[13px] text-slate-400">
                         {loan.timestamp > 0n ? fmtDate(loan.timestamp) : "—"}
                       </td>
@@ -163,13 +148,9 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
       <div className="rounded-2xl border border-[#E8EDF8] bg-white shadow-[0_4px_20px_-8px_rgba(29,103,221,0.08)] p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">
-              New Request
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1d67dd] mb-1">New Request</p>
             <h3 className="font-bold text-[#0F172A] text-[15px]">New Loan Request</h3>
-            <p className="text-[12px] text-slate-400 mt-0.5">
-              Loan amount is encrypted with FHE before submission
-            </p>
+            <p className="text-[12px] text-slate-400 mt-0.5">Loan amount is encrypted with FHE before submission</p>
           </div>
           {nextLoanId !== undefined && (
             <span className="text-[11px] font-semibold text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full shrink-0 mt-0.5">
@@ -202,16 +183,18 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-              Duration
-            </label>
-            <Select value={String(duration)} onValueChange={(v) => v && setDuration(Number(v))}>
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Duration</label>
+            <Select value={String(duration)} onValueChange={v => v && setDuration(Number(v))}>
               <SelectTrigger className="w-full h-[41px] border border-slate-200 rounded-xl px-3.5 text-[13px] text-[#0F172A] bg-white focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1d67dd] shadow-none data-[size=default]:h-[41px]">
                 <SelectValue placeholder="Select duration" className="text-[#0F172A] opacity-100" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-slate-200 shadow-lg">
                 {DURATION_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={String(o.value)} className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5">
+                  <SelectItem
+                    key={o.value}
+                    value={String(o.value)}
+                    className="focus:bg-[#1d67dd] focus:text-white cursor-pointer text-[#0F172A] py-2.5"
+                  >
                     {o.label}
                   </SelectItem>
                 ))}
@@ -230,9 +213,7 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
         <button
           onClick={handleCreate}
           disabled={isProcessing || !hasCreditScore || !amount || !isInstanceReady}
-          title={
-            isFhevmError ? "FHE initialization failed — try refreshing the page" : undefined
-          }
+          title={isFhevmError ? "FHE initialization failed — try refreshing the page" : undefined}
           className="w-full py-3 bg-[#1d67dd] text-white text-[13px] font-bold rounded-full hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
         >
           {isFhevmError
@@ -246,4 +227,4 @@ export const BorrowerPanel = ({ marketplace, collateral }: Props) => {
       </div>
     </div>
   );
-};  
+};

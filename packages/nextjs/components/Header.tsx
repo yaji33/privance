@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/helper";
@@ -10,8 +10,8 @@ export type Tab = "borrower" | "lender" | "agreements";
 export const DEFAULT_TAB: Tab = "borrower";
 
 export const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "borrower",   label: "Borrower",   icon: "↓" },
-  { id: "lender",     label: "Lender",     icon: "↑" },
+  { id: "borrower", label: "Borrower", icon: "↓" },
+  { id: "lender", label: "Lender", icon: "↑" },
   { id: "agreements", label: "Agreements", icon: "⇄" },
 ];
 
@@ -20,20 +20,18 @@ interface HeaderProps {
 }
 
 const headerTextColor = "text-[#0F172A]";
-const headerNavColor  = "text-[#475569]";
-const headerNavHover  = "hover:text-[#0F172A]";
-const headerBg        = "bg-white/92 shadow-lg shadow-black/5";
-const headerBorder    = "border-white/80";
+const headerNavColor = "text-[#475569]";
+const headerNavHover = "hover:text-[#0F172A]";
+const headerBg = "bg-white/92 shadow-lg shadow-black/5";
+const headerBorder = "border-white/80";
 
 export const Header = ({ agreementCount = 0 }: HeaderProps) => {
-  const pathname     = usePathname();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isConnected } = useAccount();
 
   const isDashboard = pathname === "/dashboard";
-  const activeTab   = isDashboard
-    ? ((searchParams.get("tab") as Tab) ?? DEFAULT_TAB)
-    : null;
+  const activeTab = isDashboard ? ((searchParams.get("tab") as Tab) ?? DEFAULT_TAB) : null;
 
   return (
     <header className="fixed top-0 z-30 w-full px-4 pt-4 sm:px-6">
@@ -43,9 +41,7 @@ export const Header = ({ agreementCount = 0 }: HeaderProps) => {
         >
           <Link href="/" className="relative z-10 flex items-center select-none">
             <Image src="/privance-logo.svg" alt="Privance Logo" width={42} height={42} />
-            <span className={`${headerTextColor} font-semibold text-xl leading-none tracking-tight`}>
-              Privance
-            </span>
+            <span className={`${headerTextColor} font-semibold text-xl leading-none tracking-tight`}>Privance</span>
           </Link>
 
           <nav
@@ -53,9 +49,15 @@ export const Header = ({ agreementCount = 0 }: HeaderProps) => {
           >
             {!isConnected ? (
               <div className="flex items-center gap-8">
-                <a href="/#the-problem"  className={`${headerNavHover} transition-colors`}>Problem</a>
-                <a href="/#the-solution" className={`${headerNavHover} transition-colors`}>Solution</a>
-                <a href="/#features"     className={`${headerNavHover} transition-colors`}>Features</a>
+                <Link href="/#the-problem" className={`${headerNavHover} transition-colors`}>
+                  Problem
+                </Link>
+                <Link href="/#the-solution" className={`${headerNavHover} transition-colors`}>
+                  Solution
+                </Link>
+                <Link href="/#features" className={`${headerNavHover} transition-colors`}>
+                  Features
+                </Link>
               </div>
             ) : (
               TABS.map(tab => {
@@ -67,9 +69,10 @@ export const Header = ({ agreementCount = 0 }: HeaderProps) => {
                     className={`
                       flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium
                       transition-all duration-150 select-none
-                      ${isActive
-                        ? `${headerTextColor} bg-[#F1F5F9]`
-                        : `${headerNavColor} ${headerNavHover} hover:bg-[#F8FAFC]`
+                      ${
+                        isActive
+                          ? `${headerTextColor} bg-[#F1F5F9]`
+                          : `${headerNavColor} ${headerNavHover} hover:bg-[#F8FAFC]`
                       }
                     `}
                   >
@@ -79,10 +82,7 @@ export const Header = ({ agreementCount = 0 }: HeaderProps) => {
                       <span
                         className={`
                           ml-0.5 text-xs px-1.5 py-0.5 rounded-full font-bold leading-none
-                          ${isActive
-                            ? "bg-[#1741D9] text-white"
-                            : "bg-[#EBF0FF] text-[#1741D9]"
-                          }
+                          ${isActive ? "bg-[#1741D9] text-white" : "bg-[#EBF0FF] text-[#1741D9]"}
                         `}
                       >
                         {agreementCount}

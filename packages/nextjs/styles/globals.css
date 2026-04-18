@@ -18,11 +18,11 @@
 @plugin "daisyui/theme" {
   name: "light";
 
-  --color-primary: #1741D9;
+  --color-primary: #1741d9;
   --color-primary-content: #ffffff;
   --color-secondary: #e8edf8;
   --color-secondary-content: #0f172a;
-  --color-accent: #1741D9;
+  --color-accent: #1741d9;
   --color-accent-content: #ffffff;
   --color-neutral: #0f172a;
   --color-neutral-content: #ffffff;
@@ -43,7 +43,7 @@
 @plugin "daisyui/theme" {
   name: "dark";
 
-  --color-primary: #1741D9;
+  --color-primary: #1741d9;
   --color-primary-content: #ffffff;
   --color-secondary: #1e293b;
   --color-secondary-content: #f1f5f9;
@@ -90,9 +90,21 @@
 
   body {
     min-height: 100vh;
-    font-family: "Telegraf", ui-sans-serif, system-ui, -apple-system, Segoe UI,
-      Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji",
-      "Segoe UI Emoji", "Segoe UI Symbol";
+    font-family:
+      "Telegraf",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      Ubuntu,
+      Cantarell,
+      Noto Sans,
+      Helvetica Neue,
+      Arial,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      "Segoe UI Symbol";
   }
 
   h1,

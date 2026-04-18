@@ -10,6 +10,7 @@
     "lib": ["es2022"], // get error cause (ErrorOptions)
     "module": "commonjs",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "noImplicitAny": true,
     "removeComments": true,
     "resolveJsonModule": true,
