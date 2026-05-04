@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDeployedContractInfo } from "../helper";
 import { useWagmiEthers } from "../wagmi/useWagmiEthers";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
-import { useAccount, useReadContract, useReadContracts } from "wagmi";
+import { useAccount, usePublicClient, useReadContract } from "wagmi";
 
 const MOCK_CHAINS = { 31337: "http://localhost:8545" } as const;
 
@@ -76,48 +76,63 @@ export const useRepaymentTracker = () => {
     return ids;
   }, [borrowerIds, lenderIds]);
 
-  const agreementCallConfigs = useMemo(() => {
-    if (!hasContract || myAgreementIds.length === 0) return [];
-    return myAgreementIds.map(id => ({
-      address: tracker!.address as `0x${string}`,
-      abi: tracker!.abi as any,
-      functionName: "agreements" as const,
-      args: [id] as const,
-    }));
-  }, [hasContract, myAgreementIds, tracker]);
+  const publicClient = usePublicClient();
+  const [agreements, setAgreements] = useState<Agreement[]>([]);
 
-  const { data: rawAgreements, refetch: refetchAgreements } = useReadContracts({
-    contracts: agreementCallConfigs,
-    query: { enabled: agreementCallConfigs.length > 0 },
-  });
+  const fetchAgreementData = useCallback(async () => {
+    if (!hasContract || !address || myAgreementIds.length === 0 || !publicClient || !tracker) {
+      setAgreements([]);
+      return;
+    }
+    const results = await Promise.all(
+      myAgreementIds.map(async (id) => {
+        try {
+          const [details, statusStr] = await Promise.all([
+            publicClient.readContract({
+              address: tracker.address as `0x${string}`,
+              abi: tracker.abi as any,
+              functionName: "getAgreementDetails",
+              args: [id],
+              account: address,
+            }),
+            publicClient.readContract({
+              address: tracker.address as `0x${string}`,
+              abi: tracker.abi as any,
+              functionName: "getAgreementStatus",
+              args: [id],
+            }),
+          ]);
+          const r = details as any;
+          const s = statusStr as string;
+          return {
+            agreementId:          id,
+            loanId:               0n,
+            offerId:              0n,
+            borrower:             r.borrower    ?? r[0],
+            lender:               r.lender      ?? r[1],
+            principal:            r.principal   ?? r[2],
+            interestRate:         r.interestRate ?? r[3],
+            duration:             0n,
+            collateralAmount:     0n,
+            totalRepaymentAmount: r.totalDue    ?? r[4],
+            amountRepaid:         r.amountPaid  ?? r[5],
+            dueDate:              r.dueDate     ?? r[6],
+            creationTime:         0n,
+            isActive:             r.isActive    ?? r[7],
+            isRepaid:             s === "REPAID",
+            isDefaulted:          s === "DEFAULTED",
+          } as Agreement;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    setAgreements(results.filter(Boolean) as Agreement[]);
+  }, [hasContract, address, myAgreementIds, publicClient, tracker]);
 
-  const agreements = useMemo<Agreement[]>(() => {
-    if (!rawAgreements) return [];
-    return rawAgreements.flatMap((item, i) => {
-      if (item.status !== "success" || !item.result) return [];
-      const r = item.result as any;
-      return [
-        {
-          agreementId: myAgreementIds[i],
-          loanId: r.loanId ?? r[1],
-          offerId: r.offerId ?? r[2],
-          borrower: r.borrower ?? r[3],
-          lender: r.lender ?? r[4],
-          principal: r.principal ?? r[5],
-          interestRate: r.interestRate ?? r[6],
-          duration: r.duration ?? r[7],
-          collateralAmount: r.collateralAmount ?? r[8],
-          totalRepaymentAmount: r.totalRepaymentAmount ?? r[9],
-          amountRepaid: r.amountRepaid ?? r[10],
-          dueDate: r.dueDate ?? r[11],
-          creationTime: r.creationTime ?? r[12],
-          isActive: r.isActive ?? r[13],
-          isRepaid: r.isRepaid ?? r[14],
-          isDefaulted: r.isDefaulted ?? r[15],
-        } as Agreement,
-      ];
-    });
-  }, [rawAgreements, myAgreementIds]);
+  useEffect(() => {
+    fetchAgreementData();
+  }, [fetchAgreementData]);
 
   const { data: nextAgreementId } = useReadContract({
     ...readCfg,
@@ -126,8 +141,8 @@ export const useRepaymentTracker = () => {
   });
 
   const refetchAll = useCallback(
-    () => Promise.all([refetchBorrower(), refetchLender(), refetchAgreements()]),
-    [refetchBorrower, refetchLender, refetchAgreements],
+    () => Promise.all([refetchBorrower(), refetchLender(), fetchAgreementData()]),
+    [refetchBorrower, refetchLender, fetchAgreementData],
   );
 
   const makePayment = useCallback(
@@ -159,7 +174,7 @@ export const useRepaymentTracker = () => {
       try {
         const tx = await contract.checkDefault(agreementId);
         await tx.wait();
-        await refetchAgreements();
+        await fetchAgreementData();
         toast.success("Default check complete.", { id: tid });
       } catch (e: any) {
         toast.error(e?.reason ?? e?.message ?? "Check failed", { id: tid });
@@ -167,7 +182,7 @@ export const useRepaymentTracker = () => {
         setIsProcessing(false);
       }
     },
-    [getContract, isProcessing, refetchAgreements],
+    [getContract, isProcessing, fetchAgreementData],
   );
 
   return {
